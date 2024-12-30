@@ -1,0 +1,44 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "en": "Query ENS instance ID and specify column information",
+    "zh-cn": "查询ENS实例ID及指定列信息",
+    "name-en": "ACS::ENS::QueryInstanceSliceInfo",
+    "name-zh-cn": "查询ENS实例ID及指定列信息"
+  },
+  "Parameters": {
+    "columnName": {
+      "Description": {
+        "en": "ColumnName",
+        "zh-cn": "保留的列名"
+      },
+      "Type": "String"
+    }
+  },
+  "Tasks": [
+    {
+      "Name": "ExecuteApi",
+      "Action": "ACS::ExecuteApi",
+      "Description": "查询ENS实例列表",
+      "Properties": {
+        "Parameters": {
+          "PageSize": 100
+        },
+        "Service": "ens",
+        "API": "DescribeInstances"
+      },
+      "Outputs": {
+        "InstancesInfo": {
+          "Type": "Json",
+          "ValueSelector": ".Instances.Instance|map( {\"InstanceId\": (.InstanceId), {{ columnName }} } )"
+        }
+      }
+    }
+  ],
+  "Outputs": {
+    "instancesInfo": {
+      "Type": "Json",
+      "Value": "{{ ExecuteApi.InstancesInfo }}"
+    }
+  }
+}

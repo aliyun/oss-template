@@ -1,0 +1,127 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  name-en: ACS-ECS-DownloadFileFromECS
+  name-zh-cn: 从ECS实例下载文件
+  en: Upload ECS files to OSS and generate temporary download links
+  zh-cn: 将ECS文件上传到OSS，并生成临时下载链接
+Parameters:
+  regionId:
+    Type: String
+    Label:
+      en: RegionId
+      zh-cn: 地域ID
+    AssociationProperty: ALIYUN::ECS::RegionId
+    Default: '{{ ACS::RegionId }}'
+  instanceId:
+    Type: String
+    AssociationProperty: ALIYUN::ECS::Instance::InstanceId
+    Label:
+      en: ECS Instance Id
+      zh-cn: ECS实例
+    AssociationPropertyMetadata:
+      RegionId: regionId
+  fileName:
+    Type: String
+    Label:
+      en: File to be downloaded
+      zh-cn: 要下载的文件
+    Description:
+      en: The path of the file to be downloaded on the ecs, such as /root/your_file.zip (linux), C:\\Users\\Administrator\\your_file.zip (windows)
+      zh-cn: 要下载的文件在ecs上的路径，如/root/your_file.zip (linux), C:\\Users\\Administrator\\your_file.zip (windows 请使用双反斜杠)
+  bucketName:
+    Type: String
+    AssociationProperty: ALIYUN::OSS::Bucket::BucketName
+    AssociationPropertyMetadata:
+      RegionId: regionId
+    Label:
+      en: OSS bucket for temporary storage
+      zh-cn: 临时存储文件的OSS Bucket
+    Description:
+      en: Select your existing OSS Bucket from the drop-down list. The files to be downloaded will be uploaded to the /aliyun_download_file directory in the Bucket for subsequent downloads. You can delete it after downloading.
+      zh-cn: 下拉选择您已有的OSS Bucket，要下载的文件会先上传到Bucket的/aliyun_download_file目录下，用于后续下载。您可在下载后删除。
+Tasks:
+  - Action: ACS::ECS::UploadOssFile
+    Name: UploadOssFile
+    Description: ''
+    Properties:
+      regionId: '{{ regionId }}'
+      ossRegion: '{{ regionId }}'
+      validTime: 900
+      uploadWaitingTime: 3600
+      objectName:
+        Fn::Join:
+          - /
+          - - aliyun_download_file/{{ ACS::ExecutionId }}
+            - Fn::Select:
+              - -1
+              - Fn::If:
+                  - Fn::ContainsSubString:
+                      - '{{ fileName }}'
+                      - /
+                  - Fn::Split:
+                      - /
+                      - '{{ fileName }}'
+                  - Fn::Split:
+                      - \\
+                      - '{{ fileName }}'
+      bucketName: '{{ bucketName }}'
+      fileToUpload: '{{ fileName }}'
+      instanceId: '{{ instanceId }}'
+  - Name: putBucketAcl
+    Action: 'ACS::ExecuteAPI'
+    Properties:
+      Service: OSS
+      API: PutObjectACL
+      Headers:
+        x-oss-object-acl: private
+      Parameters:
+        BucketName: '{{ bucketName }}'
+        RegionId: '{{ regionId }}'
+        key:
+          Fn::Join:
+            - /
+            - - aliyun_download_file/{{ ACS::ExecutionId }}
+              - Fn::Select:
+                  - -1
+                  - Fn::If:
+                      - Fn::ContainsSubString:
+                          - '{{ fileName }}'
+                          - /
+                      - Fn::Split:
+                          - /
+                          - '{{ fileName }}'
+                      - Fn::Split:
+                          - \\
+                          - '{{ fileName }}'
+  - Action: ACS::OSS::GenerateUrl
+    Name: GenerateUrl
+    Description: ''
+    Properties:
+      regionId: '{{ regionId }}'
+      validTime: 900
+      isInternal: false
+      bucketName: '{{ bucketName }}'
+      objectName:
+        Fn::Join:
+          - /
+          - - aliyun_download_file/{{ ACS::ExecutionId }}
+            - Fn::Select:
+                - -1
+                - Fn::If:
+                    - Fn::ContainsSubString:
+                        - '{{ fileName }}'
+                        - /
+                    - Fn::Split:
+                        - /
+                        - '{{ fileName }}'
+                    - Fn::Split:
+                        - \\
+                        - '{{ fileName }}'
+    Outputs:
+      temporaryUrl:
+        Type: String
+        ValueSelector: temporaryUrl
+Outputs:
+  temporaryUrl:
+    Type: String
+    Value: '{{ GenerateUrl.temporaryUrl }}'

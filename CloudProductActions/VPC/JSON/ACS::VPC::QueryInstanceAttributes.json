@@ -1,0 +1,119 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "en": "Query VPC instance attributes",
+    "zh-cn": "查询专有网络属性",
+    "name-en": "ACS::VPC::QueryInstanceAttributes",
+    "name-zh-cn": "查询专有网络属性"
+  },
+  "Parameters": {
+    "regionId": {
+      "Description": {
+        "en": "The ID of region",
+        "zh-cn": "地域ID"
+      },
+      "Type": "String",
+      "Default": "{{ ACS::RegionId }}"
+    },
+    "instanceId": {
+      "Description": {
+        "en": "The ID of VPC instance",
+        "zh-cn": "VPC实例ID"
+      },
+      "Type": "String"
+    }
+  },
+  "Tasks": [
+    {
+      "Name": "queryInstanceInfo",
+      "Action": "ACS::ExecuteApi",
+      "Description": {
+        "en": "Queries instance Info",
+        "zh-cn": "获取实例信息"
+      },
+      "Properties": {
+        "Service": "VPC",
+        "API": "DescribeVpcs",
+        "Parameters": {
+          "RegionId": "{{ regionId }}",
+          "VpcId": "{{ instanceId }}"
+        }
+      },
+      "Outputs": {
+        "instanceInfo": {
+          "Type": "Json",
+          "ValueSelector": "Vpcs.Vpc[]"
+        }
+      }
+    },
+    {
+      "Name": "queryInstanceCount",
+      "Action": "ACS::ExecuteApi",
+      "Description": {
+        "en": "Queries ECS instance count",
+        "zh-cn": "获取ECS实例数量"
+      },
+      "Properties": {
+        "Service": "ECS",
+        "API": "DescribeInstances",
+        "Parameters": {
+          "RegionId": "{{ regionId }}",
+          "VpcId": "{{ instanceId }}"
+        }
+      },
+      "Outputs": {
+        "totalCount": {
+          "Type": "Number",
+          "ValueSelector": ".TotalCount"
+        }
+      }
+    },
+    {
+      "Name": "queryResourceGroup",
+      "Action": "ACS::ExecuteApi",
+      "Description": {
+        "en": "Queries resource group",
+        "zh-cn": "获取资源组"
+      },
+      "Properties": {
+        "Service": "resourcemanager",
+        "API": "ListResourceGroups",
+        "Parameters": {
+          "RegionId": "{{ regionId }}",
+          "ResourceGroupId": {
+            "Fn::Select": [
+              "ResourceGroupId",
+              "{{ queryInstanceInfo.instanceInfo }}"
+            ]
+          }
+        }
+      },
+      "Outputs": {
+        "displayName": {
+          "Type": "String",
+          "ValueSelector": "ResourceGroups.ResourceGroup[].DisplayName"
+        }
+      }
+    }
+  ],
+  "Outputs": {
+    "instanceInfo": {
+      "Type": "Json",
+      "Value": {
+        "Fn::MergeMap": [
+          {
+            "Fn::MergeMap": [
+              "{{ queryInstanceInfo.instanceInfo }}",
+              {
+                "ECSInstanceCount": "{{ queryInstanceCount.totalCount }}"
+              }
+            ]
+          },
+          {
+            "ResourceGroupDisplayName": "{{ queryResourceGroup.displayName }}"
+          }
+        ]
+      }
+    }
+  }
+}

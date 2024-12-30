@@ -62,6 +62,14 @@
       "Type": "String",
       "Default": ""
     },
+    "targetImageDescription": {
+      "Label": {
+        "en": "TargetImageDescription",
+        "zh-cn": "目标镜像描述"
+      },
+      "Type": "String",
+      "Default": ""
+    },
     "tags": {
       "Label": {
         "en": "Tags",
@@ -115,6 +123,7 @@
           "DestinationImageName": "{{ targetImageName }}",
           "Encrypted": "{{ encrypted }}",
           "Tags": "{{ tags }}",
+          "DestinationDescription": "{{targetImageDescription}}",
           "KMSKeyId": {
             "Fn::If": [
               {
@@ -133,6 +142,10 @@
         "imageId": {
           "ValueSelector": "ImageId",
           "Type": "String"
+        },
+        "imageIdWithRegion": {
+          "Type": "List",
+          "ValueSelector": ".|(.ImageId),\"{{ targetRegionId }}\""
         }
       }
     },
@@ -163,6 +176,10 @@
     "imageId": {
       "Value": "{{ copyImage.imageId }}",
       "Type": "String"
+    },
+    "imageIdWithRegion": {
+      "Type": "List",
+      "Value": "{{ copyImage.imageIdWithRegion }}"
     }
   }
 }

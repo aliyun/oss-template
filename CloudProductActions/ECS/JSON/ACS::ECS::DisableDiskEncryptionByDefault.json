@@ -1,0 +1,40 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "name-en": "ACS::ECS::DisableDiskEncryptionByDefault",
+    "name-zh-cn": "关闭云盘默认加密"
+  },
+  "Parameters": {
+    "regionId": {
+      "Type": "String",
+      "AssociationProperty": "RegionId"
+    }
+  },
+  "RamRole": "",
+  "Tasks": [
+    {
+      "Name": "DisableDiskEncryptionByDefault",
+      "Action": "ACS::ExecuteApi",
+      "Description": "DisableDiskEncryptionByDefault",
+      "Properties": {
+        "Service": "ECS",
+        "API": "DisableDiskEncryptionByDefault",
+        "Parameters": {
+          "RegionId": "{{ regionId }}"
+        }
+      },
+      "Outputs": {
+        "RequestId": {
+          "Type": "String",
+          "ValueSelector": ".RequestId"
+        }
+      }
+    }
+  ],
+  "Outputs": {
+    "requestId": {
+      "Type": "String",
+      "Value": "{{ DisableDiskEncryptionByDefault.RequestId }}"
+    }
+  }
+}

@@ -47,6 +47,22 @@
       "Type": "String",
       "Default": ""
     },
+    "invocationType": {
+      "Description": {
+        "en": "If your function execution time may exceed 60s, choose asynchronous call (Async).",
+        "zh-cn": "如果您的函数执行时间可能超过60s，请选择异步调用（Async）。"
+      },
+      "Label": {
+        "en": "InvocationType",
+        "zh-cn": "调用类型"
+      },
+      "Type": "String",
+      "AllowedValues": [
+        "Sync",
+        "Async"
+      ],
+      "Default": "Sync"
+    },
     "OOSAssumeRole": {
       "Label": {
         "en": "OOSAssumeRole",
@@ -68,7 +84,7 @@
       "Properties": {
         "functionName": "{{ functionName }}",
         "serviceName": "{{ serviceName }}",
-        "invocationType": "Sync",
+        "invocationType": "{{ invocationType }}",
         "regionId": "{{ regionId }}",
         "event": "{{ parameters }}"
       },

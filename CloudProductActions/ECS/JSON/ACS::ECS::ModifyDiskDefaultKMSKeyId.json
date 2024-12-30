@@ -1,0 +1,47 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "name-en": "ACS::ECS::ModifyDiskDefaultKMSKeyId",
+    "name-zh-cn": "根据密钥类型修改云盘默认加密密钥",
+    "en": "Modify Disk Default KMS Key",
+    "zh-cn": "根据密钥类型修改云盘默认加密密钥"
+  },
+  "Parameters": {
+    "regionId": {
+      "Type": "String",
+      "AssociationProperty": "RegionId",
+      "Label": "地域ID"
+    },
+    "KMSKeyId": {
+      "Type": "String"
+    }
+  },
+  "RamRole": "",
+  "Tasks": [
+    {
+      "Name": "ModifyDiskDefaultKMSKeyId",
+      "Action": "ACS::ExecuteApi",
+      "Description": "ModifyDiskDefaultKMSKeyId",
+      "Properties": {
+        "Service": "ECS",
+        "API": "ModifyDiskDefaultKMSKeyId",
+        "Parameters": {
+          "RegionId": "{{ regionId }}",
+          "KMSKeyId": "{{ KMSKeyId }}"
+        }
+      },
+      "Outputs": {
+        "RequestId": {
+          "Type": "String",
+          "ValueSelector": ".RequestId"
+        }
+      }
+    }
+  ],
+  "Outputs": {
+    "modifyRequestId": {
+      "Type": "String",
+      "Value": "{{ ModifyDiskDefaultKMSKeyId.RequestId }}"
+    }
+  }
+}

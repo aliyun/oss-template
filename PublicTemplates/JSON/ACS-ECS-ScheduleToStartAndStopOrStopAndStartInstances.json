@@ -53,7 +53,12 @@
       },
       "Type": "String",
       "AssociationProperty": "TimeTriggerWeekly",
-      "Default": "*"
+      "Default": "*",
+      "AssociationPropertyMetadata": {
+        "Mode": "${startFirstOrStopFirst}",
+        "StartTime": "${dailyStartTime}",
+        "StopTime": "${dailyStopTime}"
+      }
     },
     "dailyStartTime": {
       "Label": {

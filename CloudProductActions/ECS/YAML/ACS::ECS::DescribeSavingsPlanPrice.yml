@@ -66,6 +66,11 @@ Tasks:
             - First
             - .[].InstanceTypeFamily
             - '{{ targetInstanceGroup }}'
+        InstanceTypeFamilyGroup:
+          Fn::Jq:
+            - First
+            - .[].InstanceTypeFamilyGroup
+            - '{{ targetInstanceGroup }}'
     Outputs:
       result:
         Type: Json

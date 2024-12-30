@@ -72,12 +72,43 @@
         "zh-cn": "执行函数"
       },
       "Properties": {
-        "Service": "FC",
+        "Service": "FC-OPEN",
         "API": "InvokeFunction",
         "Method": "POST",
         "URI": "/services/{{serviceName}}/functions/{{functionName}}/invocations",
         "Headers": {
-          "X-Fc-Invocation-Type": "{{ invocationType }}"
+          "X-Fc-Invocation-Type": "{{ invocationType }}",
+          "X-Fc-Stateful-Async-Invocation-Enable": {
+            "Fn::If": [
+              {
+                "Fn::Equals": [
+                  "{{ invocationType }}",
+                  "Async"
+                ]
+              },
+              "true",
+              "false"
+            ]
+          },
+          "X-Fc-Stateful-Async-Invocation-Id": {
+            "Fn::If": [
+              {
+                "Fn::Equals": [
+                  "{{ invocationType }}",
+                  "Async"
+                ]
+              },
+              {
+                "Fn::Replace": [
+                  {
+                    ".": "_"
+                  },
+                  "{{ ACS::ExecutionId }}"
+                ]
+              },
+              ""
+            ]
+          }
         },
         "Parameters": {
           "AccountId": "{{ acs::accountid }}",
@@ -91,12 +122,85 @@
           "ValueSelector": ".data"
         }
       }
+    },
+    {
+      "Name": "waitForAsyncInvocation",
+      "Action": "ACS::WaitFor",
+      "Description": {
+        "en": "Wait For AsyncInvocation Result",
+        "zh-cn": "等待异步执行结果"
+      },
+      "When": {
+        "Fn::Equals": [
+          "{{ invocationType }}",
+          "Async"
+        ]
+      },
+      "MaxRetryInterval": 60,
+      "Retries": 296,
+      "DelayType": "Exponential",
+      "Delay": 2,
+      "BackOff": 2,
+      "Properties": {
+        "Service": "FC-OPEN",
+        "API": "GetStatefulAsyncInvocation",
+        "Method": "GET",
+        "URI": {
+          "Fn::Replace": [
+            {
+              ".": "_"
+            },
+            "/services/{{serviceName}}/functions/{{functionName}}/stateful-async-invocations/{{ACS::ExecutionId}}"
+          ]
+        },
+        "Parameters": {
+          "serviceName": "{{ serviceName }}",
+          "functionName": "{{ functionName }}",
+          "invocationId": {
+            "Fn::Replace": [
+              {
+                ".": "_"
+              },
+              "{{ ACS::ExecutionId }}"
+            ]
+          },
+          "AccountId": "{{ acs::accountid }}"
+        },
+        "PropertySelector": "status",
+        "DesiredValues": [
+          "Succeeded"
+        ],
+        "StopRetryValues": [
+          "Invalid",
+          "Expired",
+          "Stopped",
+          "Failed"
+        ],
+        "NotDesiredValues": []
+      },
+      "Outputs": {
+        "invocationDetail": {
+          "Type": "List",
+          "ValueSelector": "events[] | select((.eventDetail // \"\") != \"\") | .eventDetail"
+        }
+      }
     }
   ],
   "Outputs": {
     "data": {
       "Type": "String",
-      "Value": "{{ invokeFunction.data }}"
+      "Value": {
+        "Fn::If": [
+          {
+            "Fn::Equals": [
+              "{{ invocationType }}",
+              "Async"
+            ]
+          },
+          "{{ waitForAsyncInvocation.invocationDetail }}",
+          "{{ invokeFunction.data }}"
+        ]
+      }
     }
   }
 }

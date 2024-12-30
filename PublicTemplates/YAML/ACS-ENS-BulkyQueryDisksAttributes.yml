@@ -1,9 +1,9 @@
 FormatVersion: OOS-2019-06-01
 Description:
-  en: Bulky query disk ID and disk information
-  zh-cn: 批量查询磁盘ID及磁盘信息
   name-en: ACS-ENS-BulkyQueryDisksAttributes
-  name-zh-cn: 批量查询实例ID及磁盘信息
+  name-zh-cn: 批量查询ENS磁盘信息
+  en: Bulky query ENS disk info
+  zh-cn: 批量查询ENS磁盘信息
 Parameters:
   rateControl:
     Label:
@@ -20,21 +20,11 @@ Parameters:
       en: OOSAssumeRole
       zh-cn: OOS扮演的RAM角色
     Type: String
-    Default: ''
-RamRole: '{{ OOSAssumeRole }}'
+    Default: ""
+RamRole: "{{ OOSAssumeRole }}"
 Tasks:
-  - Name: ExecuteApi
-    Action: ACS::ExecuteApi
-    Description: 查询ENS磁盘列表。
-    Properties:
-      Parameters: {}
-      Service: ens
-      API: DescribeDisks
-    Outputs:
-      DisksInfo:
-        Type: List
-        ValueSelector: .Disks.Disks[]
-Outputs:
-  disks_info:
-    Type: List
-    Value: '{{ ExecuteApi.DisksInfo }}'
+  - Name: getDisks
+    Description:
+      en: Views the ENS disks
+      zh-cn: 获取ENS磁盘
+    Action: ACS::ENS::QueryDisksInfo

@@ -1,8 +1,8 @@
 {
   "FormatVersion": "OOS-2019-06-01",
   "Description": {
-    "en": "Deletes an ECS image",
-    "zh-cn": "删除一个ECS镜像",
+    "en": "Deletes an ECS image, applicable to freeing up storage space by removing custom images that are no longer needed. During configuration, users need to provide the following required parameter information: Region ID (regionId), which specifies the region of the ECS image to be deleted, and Image ID (imageId), which identifies the image to be deleted. Additionally, users can choose whether to enforce the deletion (force). Upon execution, the template will confirm the deletion of the specified ECS image.",
+    "zh-cn": "删除一个ECS镜像，适用于删除不再需要的自定义镜像以释放存储空间。在配置过程中，用户需要提供以下必填参数信息，地域ID（regionId）：用于指定需要删除镜像的地域，镜像ID（imageId）：用于指定要删除的镜像。此外，用户可以选择是否执行强制删除（force）。模板在执行后会确认删除指定的ECS镜像。",
     "name-en": "Delete Image",
     "name-zh-cn": "删除镜像",
     "categories": [

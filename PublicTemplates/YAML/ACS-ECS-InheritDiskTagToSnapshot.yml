@@ -48,6 +48,9 @@ Parameters:
       MaxErrors: 100
       Concurrency: 10
   OOSAssumeRole:
+    Label:
+      en: OOSAssumeRole
+      zh-cn: OOS扮演的RAM角色
     Description:
       name-en: The RAM role to be assumed by OOS.
       name-zh-cn: OOS扮演的RAM角色。

@@ -1,0 +1,456 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  name-en: ACS-ECS-BulkyCreateSavingsPlanDeductRule
+  name-zh-cn: 批量通过节省计划换购实例以及数据盘并设置抵扣规则
+  en: Batch purchase of instances and data disks through savings plans and setting deduction rules
+  zh-cn: 批量通过节省计划换购实例以及数据盘并设置抵扣规则
+Parameters:
+  regionId:
+    Type: String
+    Label:
+      en: RegionId
+      zh-cn: 地域ID
+    AssociationProperty: RegionId
+    Default: '{{ ACS::RegionId }}'
+  refundInstanceGroup:
+    Type: Json
+    Label:
+      en: RefundInstanceGroup
+      zh-cn: 退款实例组
+  defrayInstanceGroup:
+    Type: Json
+    Label:
+      en: PaymentInstanceGroup
+      zh-cn: 付款实例组
+  datadiskSP:
+    Type: Json
+    Label:
+      en: DatadiskSP
+      zh-cn: datadisk新购
+    Default: {}
+  planType:
+    Type: String
+    Label:
+      en: PlanType
+      zh-cn: 计划类型
+    AllowedValues:
+      - ecs
+      - universal
+    Default: ecs
+  productType:
+    Type: String
+    Label:
+      en: productType
+      zh-cn: 环境类型
+    AllowedValues:
+      - savingplan_common_public_cn
+      - savingplan_common_public_intl
+    Default: savingplan_common_public_cn
+  rateControl:
+    Label:
+      en: RateControl
+      zh-cn: 任务执行的并发比率
+    Type: Json
+    AssociationProperty: RateControl
+    Default:
+      Mode: Concurrency
+      MaxErrors: 0
+      Concurrency: 10
+  OOSAssumeRole:
+    Label:
+      en: OOSAssumeRole
+      zh-cn: OOS扮演的RAM角色
+    Type: String
+    Default: ''
+RamRole: '{{ OOSAssumeRole }}'
+Tasks:
+  - Name: refundSavingsPlanByInstance
+    Action: ACS::ECS::CreateSavingsPlan
+    Description:
+      en: Refund instance through savings plan
+      zh-cn: 按节省计划退款
+    Properties:
+      regionId: '{{ regionId }}'
+      resourceId:
+        Fn::Select:
+          - InstanceIds
+          - '{{ ACS::TaskLoopItem }}'
+      planType:
+        Fn::Jq:
+          - First
+          - .PlanType
+          - '{{ ACS::TaskLoopItem }}'
+      offeringType:
+        Fn::Jq:
+          - First
+          - .OfferingType
+          - '{{ ACS::TaskLoopItem }}'
+      committedAmount:
+        Fn::Jq:
+          - First
+          - .CommittedAmount
+          - '{{ ACS::TaskLoopItem }}'
+      instanceTypeFamily:
+        Fn::Jq:
+          - First
+          - .InstanceTypeFamily
+          - '{{ ACS::TaskLoopItem }}'
+      instanceTypeFamilyGroup:
+        Fn::Jq:
+          - First
+          - .InstanceTypeFamilyGroup
+          - '{{ ACS::TaskLoopItem }}'
+      periodUnit:
+        Fn::Jq:
+          - First
+          - .PeriodUnit
+          - '{{ ACS::TaskLoopItem }}'
+      period:
+        Fn::Jq:
+          - First
+          - .Period
+          - '{{ ACS::TaskLoopItem }}'
+    Outputs:
+      orderId:
+        Type: Json
+        ValueSelector: .orderId
+    Loop:
+      Items: '{{ refundInstanceGroup }}'
+      RateControl: '{{ rateControl }}'
+      Outputs:
+        orderIds:
+          AggregateType: Fn::ListJoin
+          AggregateField: orderId
+  - Name: deFrayInstanceBySavingsPlan
+    Action: ACS::ECS::CreateSavingsPlan
+    Description:
+      en: Defray instance through savings plan
+      zh-cn: 按节省计划付款
+    Properties:
+      regionId: '{{ regionId }}'
+      resourceId:
+        Fn::Select:
+          - InstanceIds
+          - '{{ ACS::TaskLoopItem }}'
+      planType:
+        Fn::Jq:
+          - First
+          - .PlanType
+          - '{{ ACS::TaskLoopItem }}'
+      offeringType:
+        Fn::Jq:
+          - First
+          - .OfferingType
+          - '{{ ACS::TaskLoopItem }}'
+      committedAmount:
+        Fn::Jq:
+          - First
+          - .CommittedAmount
+          - '{{ ACS::TaskLoopItem }}'
+      instanceTypeFamily:
+        Fn::Jq:
+          - First
+          - .InstanceTypeFamily
+          - '{{ ACS::TaskLoopItem }}'
+      instanceTypeFamilyGroup:
+        Fn::Jq:
+          - First
+          - .InstanceTypeFamilyGroup
+          - '{{ ACS::TaskLoopItem }}'
+      periodUnit:
+        Fn::Jq:
+          - First
+          - .PeriodUnit
+          - '{{ ACS::TaskLoopItem }}'
+      period:
+        Fn::Jq:
+          - First
+          - .Period
+          - '{{ ACS::TaskLoopItem }}'
+    Outputs:
+      orderId:
+        Type: Json
+        ValueSelector: .orderId
+    Loop:
+      Items: '{{ defrayInstanceGroup }}'
+      RateControl: '{{ rateControl }}'
+      Outputs:
+        orderIds:
+          AggregateType: Fn::ListJoin
+          AggregateField: orderId
+  - Name: datadiskSavingsPlan
+    Action: ACS::ExecuteAPI
+    Description:
+      en: datadisk savings plan
+      zh-cn: datadisk节省计划新购
+    When:
+      Fn::And:
+        - Fn::Equals:
+            - '{{ planType }}'
+            - ecs
+        - Fn::Not:
+            Fn::Equals:
+              - '{{ datadiskSP }}'
+              - {}
+    Properties:
+      Service: bssopenapi
+      API: CreateSavingsPlansInstance
+      Parameters:
+        Type: universal
+        PoolValue:
+          Fn::Jq:
+            - First
+            - .PoolValue
+            - '{{ datadiskSP }}'
+        CommodityCode: '{{ productType }}'
+        PricingCycle: Year
+        PayMode:
+          Fn::Select:
+            - Fn::Jq:
+                - First
+                - .PayMode
+                - '{{ datadiskSP }}'
+            - All Upfront: total
+              Partial Upfront: half
+              No Upfront: zero
+        Duration:
+          Fn::Jq:
+            - First
+            - .Duration
+            - '{{ datadiskSP }}'
+    Outputs:
+      orderId:
+        Type: String
+        ValueSelector: .Data.OrderId
+  - Name: deFrayUntilEcsOrderPaidReady
+    Action: ACS::WaitFor
+    Retries: 57
+    Description:
+      en: Waiting for ECS order payment to be completed
+      zh-cn: 等待ecs订单支付完成
+    Properties:
+      Service: BssOpenApi
+      API: GetOrderDetail
+      Parameters:
+        RegionId: '{{ regionId }}'
+        OrderId: '{{ ACS::TaskLoopItem }}'
+      DesiredValues:
+        - Paid
+      StopRetryValues:
+        - Cancelled
+      PropertySelector: Data.OrderList.Order[].PaymentStatus
+      NotDesiredValues: []
+    Outputs:
+      instanceIds:
+        Type: Json
+        ValueSelector: Data.OrderList.Order[] | select(.ProductCode== "savingplan") | .InstanceIDs | fromjson | .[]
+    Loop:
+      Items: '{{ deFrayInstanceBySavingsPlan.orderIds }}'
+      RateControl: '{{ rateControl }}'
+      Outputs:
+        instanceIdsList:
+          AggregateType: Fn::ListJoin
+          AggregateField: instanceIds
+  - Name: refundUntilEcsOrderPaidReady
+    Action: ACS::WaitFor
+    Retries: 57
+    When:
+      Fn::Equals:
+        - '{{ planType }}'
+        - ecs
+    Description:
+      en: Waiting for ECS order refund to be completed
+      zh-cn: 等待ecs订单退款完成
+    Properties:
+      Service: BssOpenApi
+      API: GetOrderDetail
+      Parameters:
+        RegionId: '{{ regionId }}'
+        OrderId: '{{ ACS::TaskLoopItem }}'
+      DesiredValues:
+        - Paid
+      StopRetryValues:
+        - Cancelled
+      PropertySelector: Data.OrderList.Order[].PaymentStatus
+      NotDesiredValues: []
+    Outputs:
+      instanceIds:
+        Type: Json
+        ValueSelector: Data.OrderList.Order[] | select(.ProductCode== "savingplan") | .InstanceIDs | fromjson | .[]
+    Loop:
+      Items: '{{ refundSavingsPlanByInstance.orderIds }}'
+      RateControl: '{{ rateControl }}'
+      Outputs:
+        instanceIdsList:
+          AggregateType: Fn::ListJoin
+          AggregateField: instanceIds
+  - Name: untilDatadiskOrderPaidReady
+    Action: ACS::WaitFor
+    When:
+      Fn::And:
+        - Fn::Equals:
+            - '{{ planType }}'
+            - ecs
+        - Fn::Not:
+            Fn::Equals:
+              - '{{ datadiskSP }}'
+              - {}
+    Retries: 57
+    Description:
+      en: Waits for the order is paid
+      zh-cn: 等待datadisk订单支付完成
+    DelayType: Exponential
+    Delay: 2
+    BackOff: 2
+    Properties:
+      Service: BssOpenApi
+      API: GetOrderDetail
+      Parameters:
+        RegionId: '{{ regionId }}'
+        OrderId: '{{  datadiskSavingsPlan.orderId }}'
+      DesiredValues:
+        - Paid
+      StopRetryValues:
+        - Cancelled
+      PropertySelector: Data.OrderList.Order[].PaymentStatus
+      NotDesiredValues: []
+    Outputs:
+      instanceIds:
+        Type: String
+        ValueSelector: Data.OrderList.Order[].InstanceIDs | fromjson | .[]
+  - Name: SetSavingPlanUserDeductRuleEcsdeFray
+    When:
+      Fn::And:
+        - Fn::Equals:
+            - '{{ productType }}'
+            - savingplan_common_public_cn
+        - Fn::Equals:
+            - '{{ planType }}'
+            - ecs
+    Action: ACS::ExecuteAPI
+    Description:
+      en: Set Saving Plan User Deduct Rule(ecs)
+      zh-cn: 设置抵扣规则(ecs付款)
+    Properties:
+      Service: bssopenapi
+      API: SetSavingPlanUserDeductRule
+      Method: POST
+      Parameters:
+        UserDeductRules: '[{"CommodityCode":"yundisk","ModuleCode":"datadisk","SkipDeduct":true},{"CommodityCode":"disk_performance_public_cn","ModuleCode":"io_provision","SkipDeduct":true},{"CommodityCode":"disk_performance_public_cn","ModuleCode":"io_burst","SkipDeduct":true}]'
+        SpnInstanceCode: '{{ ACS::TaskLoopItem }}'
+    Outputs:
+      result:
+        Type: Json
+        ValueSelector: .
+    Loop:
+      Items: '{{ deFrayUntilEcsOrderPaidReady.instanceIdsList }}'
+      RateControl: '{{ rateControl }}'
+      Outputs:
+        EcsRuleList:
+          AggregateType: Fn::ListJoin
+          AggregateField: result
+  - Name: SetSavingPlanUserDeductRuleEcsrefund
+    Action: ACS::ExecuteAPI
+    When:
+      Fn::And:
+        - Fn::Equals:
+            - '{{ productType }}'
+            - savingplan_common_public_cn
+        - Fn::Equals:
+            - '{{ planType }}'
+            - ecs
+    Description:
+      en: Set Saving Plan User Deduct Rule(ecs)
+      zh-cn: 设置抵扣规则(ecs退款)
+    Properties:
+      Service: bssopenapi
+      API: SetSavingPlanUserDeductRule
+      Method: POST
+      Parameters:
+        UserDeductRules: '[{"CommodityCode":"yundisk","ModuleCode":"datadisk","SkipDeduct":true},{"CommodityCode":"disk_performance_public_cn","ModuleCode":"io_provision","SkipDeduct":true},{"CommodityCode":"disk_performance_public_cn","ModuleCode":"io_burst","SkipDeduct":true}]'
+        SpnInstanceCode: '{{ ACS::TaskLoopItem }}'
+    Outputs:
+      result:
+        Type: Json
+        ValueSelector: .
+    Loop:
+      Items: '{{ refundUntilEcsOrderPaidReady.instanceIdsList }}'
+      RateControl: '{{ rateControl }}'
+      Outputs:
+        EcsRuleList:
+          AggregateType: Fn::ListJoin
+          AggregateField: result
+  - Name: SetSavingPlanUserDeductRuleDatadiskCn
+    Action: ACS::ExecuteAPI
+    When:
+      Fn::And:
+        - Fn::Equals:
+            - '{{ productType }}'
+            - savingplan_common_public_cn
+        - Fn::Equals:
+            - '{{ planType }}'
+            - ecs
+        - Fn::Not:
+            Fn::Equals:
+              - '{{ datadiskSP }}'
+              - {}
+    Description:
+      en: Set Saving Plan User Deduct Rule(DatadiskCn)
+      zh-cn: 国内Datadisk设置抵扣规则
+    Properties:
+      Service: bssopenapi
+      API: SetSavingPlanUserDeductRule
+      Method: POST
+      Parameters:
+        UserDeductRules: '[{"CommodityCode":"ecs","ModuleCode":"instance_type","SkipDeduct":true},{"CommodityCode":"ecs","ModuleCode":"systemdisk","SkipDeduct":true},{"CommodityCode":"ecs","ModuleCode":"vm_os","SkipDeduct":true},{"CommodityCode":"ecs","ModuleCode":"vm_bandwidth","SkipDeduct":true},{"CommodityCode":"eci_betav1","ModuleCode":"instance_type","SkipDeduct":true},{"CommodityCode":"eci_betav1","ModuleCode":"cpu","SkipDeduct":true},{"CommodityCode":"eci_betav1","ModuleCode":"mem","SkipDeduct":true},{"CommodityCode":"ecs_iCR_public_cn","ModuleCode":"period","SkipDeduct":true}]'
+        SpnInstanceCode: '{{ untilDatadiskOrderPaidReady.instanceIds }}'
+    Outputs:
+      result:
+        Type: List
+        ValueSelector: .
+Outputs:
+  EcsorderIds:
+    Type: List
+    Value: '{{ deFrayInstanceBySavingsPlan.orderIds }}'
+  DatadiskorderId:
+    Type: String
+    Value: '{{ datadiskSavingsPlan.orderId }}'
+  DeFrayEcsInstanceIds:
+    Type: String
+    Value: '{{ deFrayUntilEcsOrderPaidReady.instanceIdsList }}'
+  RefundEcsInstanceIds:
+    Type: String
+    Value: '{{ refundUntilEcsOrderPaidReady.instanceIdsList }}'
+  DatadiskInstanceIds:
+    Type: String
+    Value: '{{ untilDatadiskOrderPaidReady.instanceIds }}'
+  DeFrayEcsRule:
+    Type: List
+    Value: '{{ SetSavingPlanUserDeductRuleEcsdeFray.EcsRuleList }}'
+  RefundEcsRule:
+    Type: List
+    Value: '{{ SetSavingPlanUserDeductRuleEcsrefund.EcsRuleList }}'
+  DatadiskRuleCn:
+    Type: List
+    Value: '{{ SetSavingPlanUserDeductRuleDatadiskCn.result }}'
+Metadata:
+  ALIYUN::OOS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - RegionId
+          - refundInstanceGroup
+          - defrayInstanceGroup
+          - datadiskSP
+          - planType
+          - productType
+        Label:
+          default:
+            zh-cn: 选择实例
+            en: Select Ecs Instances
+      - Parameters:
+          - rateControl
+          - OOSAssumeRole
+        Label:
+          default:
+            zh-cn: 高级选项
+            en: Control Options

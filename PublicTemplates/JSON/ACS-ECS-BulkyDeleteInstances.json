@@ -1,8 +1,8 @@
 {
   "FormatVersion": "OOS-2019-06-01",
   "Description": {
-    "en": "Bulky delete ECS postpaid instances",
-    "zh-cn": "批量删除ECS按量付费实例",
+    "en": "Bulky delete ECS postpaid instances, applicable to scenarios that require managing and deleting multiple pay-as-you-go ECS instances simultaneously, such as resource release and cost optimization. During configuration, users need to provide the following required parameter information: Region ID (regionId), which specifies the region of the ECS instances to be deleted, and Target Instances (targets), which defines the specific ECS instances to be operated on. Users can also choose whether to force delete running instances (force). Upon execution, the template will return a list of the deleted instance IDs, enabling users to verify the status of the instance deletions.",
+    "zh-cn": "批量删除ECS按量付费实例，适用于需要同时管理和删除多台按量付费ECS实例的场景，例如资源释放和成本优化。在配置过程中，用户需要提供以下必填参数信息，地域ID（regionId）：用于指定需要删除实例的地域，目标实例（targets）：用于定义具体需要操作的ECS实例。用户还可以选择是否强制删除正在运行的实例（force）。模板在执行后会返回删除的实例ID列表，方便用户验证实例删除的状态。",
     "name-en": "ACS-ECS-BulkyDeleteInstances",
     "name-zh-cn": "批量删除ECS实例",
     "categories": [

@@ -1,10 +1,10 @@
 {
   "FormatVersion": "OOS-2019-06-01",
   "Description": {
-    "en": "Bulky query disk ID and disk information",
-    "zh-cn": "批量查询磁盘ID及磁盘信息",
     "name-en": "ACS-ENS-BulkyQueryDisksAttributes",
-    "name-zh-cn": "批量查询实例ID及磁盘信息"
+    "name-zh-cn": "批量查询ENS磁盘信息",
+    "en": "Bulky query ENS disk info",
+    "zh-cn": "批量查询ENS磁盘信息"
   },
   "Parameters": {
     "rateControl": {
@@ -32,26 +32,12 @@
   "RamRole": "{{ OOSAssumeRole }}",
   "Tasks": [
     {
-      "Name": "ExecuteApi",
-      "Action": "ACS::ExecuteApi",
-      "Description": "查询ENS磁盘列表。",
-      "Properties": {
-        "Parameters": {},
-        "Service": "ens",
-        "API": "DescribeDisks"
+      "Name": "getDisks",
+      "Description": {
+        "en": "Views the ENS disks",
+        "zh-cn": "获取ENS磁盘"
       },
-      "Outputs": {
-        "DisksInfo": {
-          "Type": "List",
-          "ValueSelector": ".Disks.Disks[]"
-        }
-      }
+      "Action": "ACS::ENS::QueryDisksInfo"
     }
-  ],
-  "Outputs": {
-    "disks_info": {
-      "Type": "List",
-      "Value": "{{ ExecuteApi.DisksInfo }}"
-    }
-  }
+  ]
 }

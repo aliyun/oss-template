@@ -1,0 +1,39 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: Query SWAS instance attributes
+  zh-cn: 查询轻量应用服务器属性
+  name-en: ACS::SWAS::QueryInstanceAttributes
+  name-zh-cn: 查询轻量应用服务器属性
+Parameters:
+  regionId:
+    Description:
+      en: The ID of region
+      zh-cn: 地域ID
+    Type: String
+    Default: '{{ ACS::RegionId }}'
+  instanceId:
+    Description:
+      en: The ID of SWAS instance
+      zh-cn: SWAS实例ID
+    Type: String
+Tasks:
+  - Name: queryInstanceInfo
+    Action: ACS::ExecuteApi
+    Description:
+      en: Queries instance info
+      zh-cn: 获取实例信息
+    Properties:
+      Service: SWAS-OPEN
+      API: ListInstances
+      Parameters:
+        RegionId: '{{ regionId }}'
+        InstanceIds:
+          - '{{ instanceId }}'
+    Outputs:
+      instanceInfo:
+        Type: Json
+        ValueSelector: 'Instances[]'
+Outputs:
+  instanceInfo:
+    Type: Json
+    Value: '{{ queryInstanceInfo.instanceInfo }}'

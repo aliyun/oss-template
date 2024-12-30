@@ -62,6 +62,12 @@ Parameters:
       en: The directory where the file to download to, like /root/dir1/dir2 (linux), C:\\Users\\Administrator\\dir1\\dir2 (windows)
       zh-cn: 文件要下载到的目录，如/root/dir1/dir2 (linux), C:\\Users\\Administrator\\dir1\\dir2 (windows)
     Type: String
+  downloadWaitingTime:
+    Label:
+      en: Waiting time for download (s)
+      zh-cn: 下载等待时间（秒）
+    Type: Number
+    Default: 600
 Tasks:
   - Name: generateUrl
     Action: ACS::ExecuteAPI
@@ -103,6 +109,7 @@ Tasks:
       sourceType: https
       sourcePath: '{{ generateUrl.temporaryUrl }}'
       destinationDir: '{{ destinationDir }}'
+      timeout: '{{ downloadWaitingTime }}'
 Metadata:
   ALIYUN::OOS::Interface:
     ParameterGroups:
@@ -119,6 +126,7 @@ Metadata:
           - regionId
           - instanceId
           - destinationDir
+          - downloadWaitingTime
         Label:
           default:
             zh-cn: Ecs信息与下载路径

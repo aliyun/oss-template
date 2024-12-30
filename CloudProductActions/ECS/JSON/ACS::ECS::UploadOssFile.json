@@ -80,6 +80,14 @@
         "zh-cn": "待上传文件在ecs上的路径，如/root/your_file.zip (linux), C:\\\\Users\\\\Administrator\\\\your_file.zip (windows)"
       },
       "Type": "String"
+    },
+    "uploadWaitingTime": {
+      "Label": {
+        "en": "Waiting time for upload (s)",
+        "zh-cn": "上传等待时间（秒）"
+      },
+      "Type": "Number",
+      "Default": 600
     }
   },
   "Tasks": [
@@ -159,6 +167,7 @@
       "Properties": {
         "regionId": "{{ regionId }}",
         "instanceId": "{{ instanceId }}",
+        "timeout": "{{ uploadWaitingTime }}",
         "commandType": {
           "Fn::If": [
             {
@@ -179,8 +188,8 @@
                 "linux"
               ]
             },
-            "curl -X PUT -T \"{{fileToUpload}}\" \"{{generateUrl.temporaryUrl}}\"",
-            "$localFilePath = \"{{fileToUpload}}\"\n$uploadUrl = \"{{generateUrl.temporaryUrl}}\"\n\nInvoke-WebRequest -Uri $uploadUrl -Method Put -InFile $localFilePath"
+            "response=$(curl -X PUT -T \"{{fileToUpload}}\" -w \"%{http_code}\" -v \"{{generateUrl.temporaryUrl}}\")\n# 检查响应\nif [ \"$response\" -ne 200 ]; then\n  echo \"Curl Failed.\"\n  exit 1\nfi",
+            "$localFilePath = \"{{fileToUpload}}\"\n$uploadUrl = \"{{generateUrl.temporaryUrl}}\"\n\n$response = Invoke-WebRequest -Uri $uploadUrl -Method Put -InFile $localFilePath -UseBasicParsing -ErrorAction Stop\n# 检查响应内容是否包含 \"AccessDenied\"\nif ($response.StatusCode -ne 200) {\n  Write-Host \"Invoke-WebRequest Failed.\"\n  exit 1\n}"
           ]
         }
       }

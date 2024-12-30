@@ -7,15 +7,6 @@
     "zh-cn": "构建Docker镜像并上传至阿里云镜像仓库 （仅支持在linux机器构建)"
   },
   "Parameters": {
-    "regionId": {
-      "Label": {
-        "en": "region",
-        "zh-cn": "地域"
-      },
-      "Type": "String",
-      "Default": "{{ ACS::RegionId }}",
-      "AssociationProperty": "RegionId"
-    },
     "codeSource": {
       "Label": {
         "en": "CodeResource",
@@ -35,28 +26,6 @@
       "Type": "String",
       "AssociationPropertyMetadata": {
         "PropertyType": "ref"
-      }
-    },
-    "branch": {
-      "Label": {
-        "en": "Branch",
-        "zh-cn": "分支"
-      },
-      "Description": {
-        "en": "Branch, pull default branch if not set",
-        "zh-cn": "代码仓库分支，不填拉取默认分支"
-      },
-      "Type": "String",
-      "Default": "",
-      "AssociationPropertyMetadata": {
-        "Visible": {
-          "Condition": {
-            "Fn::Equals": [
-              "${codeSource}",
-              "git"
-            ]
-          }
-        }
       }
     },
     "buildType": {
@@ -86,7 +55,7 @@
       "Default": "",
       "AssociationProperty": "ALIYUN::ECS::Instance::InstanceId",
       "AssociationPropertyMetadata": {
-        "RegionId": "regionId",
+        "RegionId": "{{ ACS::RegionId }}",
         "Visible": {
           "Condition": {
             "Fn::Equals": [
@@ -282,12 +251,17 @@
     "acrType": {
       "Label": {
         "en": "ACR Type",
-        "zh-cn": "容器镜像类型"
+        "zh-cn": "容器镜像服务类型"
+      },
+      "Description": {
+        "en": "If you do not have a container image service, You can choose to open <a href=\"https://www.alibabacloud.com/help/en/acr/user-guide/create-a-container-registry-personal-edition-instance\" target=\"_blank\"> Personal edition </a> or <a href=\"https://www.alibabacloud.com/help/en/acr/user-guide/create-a-container-registry-enterprise-edition-instance\" target=\"_blank\"> Enterprise Edition </a>.",
+        "zh-cn": "如您还没有容器镜像服务，您可以选择开通<a href=\"https://help.aliyun.com/zh/acr/user-guide/create-a-container-registry-personal-edition-instance?spm=a2c4g.11186623.0.i7\" target=\"_blank\">个人版</a>或<a href=\"https://help.aliyun.com/zh/acr/user-guide/create-a-container-registry-enterprise-edition-instance?spm=a2c4g.11186623.0.i10\" target=\"_blank\">企业版</a>。"
       },
       "Type": "String",
+      "Default": "Personal",
       "AllowedValues": [
-        "Enterprise",
-        "Personal"
+        "Personal",
+        "Enterprise"
       ],
       "AssociationPropertyMetadata": {
         "ValueLabelMapping": {
@@ -433,7 +407,7 @@
       "AssociationProperty": "ALIYUN::CR::Repository::RepoName",
       "AssociationPropertyMetadata": {
         "AcrType": "${acrType}",
-        "RegionId": "${regionId}",
+        "RegionId": "{{ ACS::RegionId }}",
         "InstanceId": "${acrId}",
         "RepoNamespaceName": "${namespace}",
         "RepoStatus": "ALL"
@@ -445,11 +419,11 @@
         "zh-cn": "是否通过内网链接上传镜像"
       },
       "Description": {
-        "en": "False generates an public url, True generates an internal url. If you want to use internal link to push image, please ensure that your image repository and ECS instance are in the same VPC (personal acr, accessible to all VPC machines, no separate configuration required), please refer to <a href=\"https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr\" target=\"_blank\">acr configuration access VPC</a>.",
-        "zh-cn": "False生成公网URL，True生成内网URL。如果您想要使用内网链接上传镜像，请确保您的镜像仓库和ECS实例在同一个VPC内(个人版acr，VPC机器均可访问，无需单独配置)，具体请参考<a href=\"https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr\" target=\"_blank\">acr配置访问VPC</a>。"
+        "en": "If you want to use internal link to push image, please ensure that your image repository and ECS instance are in the same VPC (personal acr, accessible to all VPC machines, no separate configuration required), please refer to <a href=\"https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr\" target=\"_blank\">acr configuration access VPC</a>.",
+        "zh-cn": "如果您想要使用内网链接上传镜像，请确保您的镜像仓库和ECS实例在同一个VPC内(个人版acr，VPC机器均可访问，无需单独配置)，具体请参考<a href=\"https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr\" target=\"_blank\">acr配置访问VPC</a>。"
       },
       "Type": "Boolean",
-      "Default": true
+      "Default": false
     }
   },
   "Tasks": [
@@ -468,7 +442,7 @@
         "zh-cn": "创建临时ecs"
       },
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "stackName": {
           "Fn::Replace": [
             {
@@ -577,7 +551,7 @@
         "zh-cn": "从OSS下载代码"
       },
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -610,7 +584,7 @@
         "zh-cn": "从git下载代码"
       },
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -624,7 +598,7 @@
           ]
         },
         "commandType": "RunShellScript",
-        "commandContent": "#!/bin/bash\n# Function to install git on Ubuntu/Debian\ninstall_git_debian() {\n    echo \"Installing git...\"\n    sudo apt-get update\n    sudo apt-get install git -y\n}\n\n# Function to install git on CentOS/Red Hat\ninstall_git_centos() {\n    echo \"Installing git...\"\n    sudo yum install git -y\n}\n\n# Identify the Operating System\n. /etc/os-release\n\ncase $ID in\n    ubuntu|debian)\n        echo \"Detected system: Ubuntu/Debian\"\n        install_git_debian\n        ;;\n    centos|rhel|alinux)\n        echo \"Detected system: CentOS/Red Hat\"\n        install_git_centos\n        ;;\n    *)\n        echo \"Unsupported Operating System: $ID\"\n        exit 1\n        ;;\nesac\n\necho \"Git installation script has completed.\"\nmkdir -p /root/workspace/{{ACS::ExecutionId}}\ncd /root/workspace/{{ACS::ExecutionId}}\nif [ -n \"{{ branch }}\" ]; then\n  git clone --branch {{ branch }} {{ codeSourceUrl }} .\nelse\n  git clone {{ codeSourceUrl }} .\nfi"
+        "commandContent": "#!/bin/bash\n# Function to install git on Ubuntu/Debian\ninstall_git_debian() {\n    echo \"Installing git...\"\n    sudo apt-get update\n    sudo apt-get install git -y\n}\n\n# Function to install git on CentOS/Red Hat\ninstall_git_centos() {\n    echo \"Installing git...\"\n    sudo yum install git -y\n}\n\n# Identify the Operating System\n. /etc/os-release\n\ncase $ID in\n    ubuntu|debian)\n        echo \"Detected system: Ubuntu/Debian\"\n        install_git_debian\n        ;;\n    centos|rhel|alinux)\n        echo \"Detected system: CentOS/Red Hat\"\n        install_git_centos\n        ;;\n    *)\n        echo \"Unsupported Operating System: $ID\"\n        exit 1\n        ;;\nesac\n\necho \"Git installation script has completed.\"\nmkdir -p /root/workspace/{{ACS::ExecutionId}}\ncd /root/workspace/{{ACS::ExecutionId}}\ngit clone {{ codeSourceUrl }} ."
       }
     },
     {
@@ -636,7 +610,7 @@
       },
       "Action": "ACS::ECS::ConfigureOOSPackageWithTemporaryURL",
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -663,7 +637,7 @@
       "Action": "ACS::ECS::RunCommand",
       "Properties": {
         "workingDir": "/root/workspace/{{ACS::ExecutionId}}",
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -677,7 +651,7 @@
           ]
         },
         "commandType": "RunShellScript",
-        "commandContent": "region=\"{{regionId}}\"\n\nif [ -f /etc/docker/daemon.json ]; then\n  echo \"daemon.json already exists, skip\"\n  exit 0\nfi\n\nif [[ $region =~ ^cn && $region != \"cn-hongkong\" ]]; then\necho \"configure docker mirror for current region\"\nmkdir -p /etc/docker\ntee /etc/docker/daemon.json <<-'EOF'\n{\n    \"registry-mirrors\": [\n        \"https://0vmzj3q6.mirror.aliyuncs.com\",\n        \"https://docker.m.daocloud.io\",\n        \"https://mirror.baidubce.com\",\n        \"https://dockerproxy.com\",\n        \"https://mirror.iscas.ac.cn\",\n        \"https://huecker.io\",\n        \"https://dockerhub.timeweb.cloud\",\n        \"https://noohub.ru\",\n        \"https://vlgh0kqj.mirror.aliyuncs.com\"\n    ]\n}\nEOF\nsystemctl daemon-reload\nsystemctl restart docker\nfi"
+        "commandContent": "region=\"{{ ACS::RegionId }}\"\n\nif [ -f /etc/docker/daemon.json ]; then\n  echo \"daemon.json already exists, skip\"\n  exit 0\nfi\n\nif [[ $region =~ ^cn && $region != \"cn-hongkong\" ]]; then\necho \"configure docker mirror for current region\"\nmkdir -p /etc/docker\ntee /etc/docker/daemon.json <<-'EOF'\n{\n    \"registry-mirrors\": [\n        \"https://0vmzj3q6.mirror.aliyuncs.com\",\n        \"https://docker.m.daocloud.io\",\n        \"https://mirror.baidubce.com\",\n        \"https://dockerproxy.com\",\n        \"https://mirror.iscas.ac.cn\",\n        \"https://huecker.io\",\n        \"https://dockerhub.timeweb.cloud\",\n        \"https://noohub.ru\",\n        \"https://vlgh0kqj.mirror.aliyuncs.com\"\n    ]\n}\nEOF\nsystemctl daemon-reload\nsystemctl restart docker\nfi"
       }
     },
     {
@@ -690,7 +664,7 @@
       },
       "Properties": {
         "workingDir": "/root/workspace/{{ACS::ExecutionId}}",
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -778,7 +752,7 @@
         "zh-cn": "登录到企业版acr并推送镜像"
       },
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -795,7 +769,7 @@
         "workingDir": "/root/workspace/{{ACS::ExecutionId}}",
         "commandContent": {
           "Fn::Sub": [
-            "if [ {{ isInternal }} == true ]; then\n  repo={{getAcrName.acrName}}-registry-vpc.{{regionId}}.cr.aliyuncs.com\n  current_image_version={{getAcrName.acrName}}-registry-vpc.{{regionId}}.cr.aliyuncs.com/{{namespace}}/{{repoName}}:{{imageVersion}}\nelse\n  repo={{getAcrName.acrName}}-registry.{{regionId}}.cr.aliyuncs.com\n  current_image_version={{getAcrName.acrName}}-registry.{{regionId}}.cr.aliyuncs.com/{{namespace}}/{{repoName}}:{{imageVersion}}\nfi\ndocker build -f {{dockerFilePath}} -t $current_image_version ${FinalContextPath}\ndocker login --username={{ generateAuthorizationToken.tempUsername }} --password={{ generateAuthorizationToken.authorizationToken }} $repo\ndocker push $current_image_version",
+            "if [ {{ isInternal }} == true ]; then\n  repo={{getAcrName.acrName}}-registry-vpc.{{ACS::RegionId}}.cr.aliyuncs.com\n  current_image_version={{getAcrName.acrName}}-registry-vpc.{{ACS::RegionId}}.cr.aliyuncs.com/{{namespace}}/{{repoName}}:{{imageVersion}}\nelse\n  repo={{getAcrName.acrName}}-registry.{{ACS::RegionId}}.cr.aliyuncs.com\n  current_image_version={{getAcrName.acrName}}-registry.{{ACS::RegionId}}.cr.aliyuncs.com/{{namespace}}/{{repoName}}:{{imageVersion}}\nfi\ndocker build -f {{dockerFilePath}} -t $current_image_version ${FinalContextPath}\ndocker login --username={{ generateAuthorizationToken.tempUsername }} --password={{ generateAuthorizationToken.authorizationToken }} $repo\ndocker push $current_image_version",
             {
               "FinalContextPath": {
                 "Fn::If": [
@@ -856,7 +830,7 @@
         "zh-cn": "登录到个人版acr并推送镜像"
       },
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -873,7 +847,7 @@
         "workingDir": "/root/workspace/{{ACS::ExecutionId}}",
         "commandContent": {
           "Fn::Sub": [
-            "if [ {{ isInternal }} == true ]; then\n  repo=registry-vpc.{{regionId}}.aliyuncs.com\n  original_repo_name=\"{{repoName}}\"\n  modified_repo_name=$(echo \"$original_repo_name\" | sed 's/registry\\(.*\\)\\./registry-vpc\\1./')\n  current_image_version=$modified_repo_name:{{imageVersion}}\nelse\n  repo=registry.{{regionId}}.aliyuncs.com\n  current_image_version={{repoName}}:{{imageVersion}}\nfi\ndocker build -f {{dockerFilePath}} -t $current_image_version ${FinalContextPath}\ndocker login --username={{ username }} --password={{ password }} $repo\ndocker push $current_image_version",
+            "if [ {{ isInternal }} == true ]; then\n  repo=registry-vpc.{{ACS::RegionId}}.aliyuncs.com\n  original_repo_name=\"{{repoName}}\"\n  modified_repo_name=$(echo \"$original_repo_name\" | sed 's/registry\\(.*\\)\\./registry-vpc\\1./')\n  current_image_version=$modified_repo_name:{{imageVersion}}\nelse\n  repo=registry.{{ACS::RegionId}}.aliyuncs.com\n  current_image_version={{repoName}}:{{imageVersion}}\nfi\ndocker build -f {{dockerFilePath}} -t $current_image_version ${FinalContextPath}\ndocker login --username={{ username }} --password={{ password }} $repo\ndocker push $current_image_version",
             {
               "FinalContextPath": {
                 "Fn::If": [
@@ -933,7 +907,7 @@
         "zh-cn": "删除临时ecs并授予acr权限"
       },
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "stackId": "{{ createTemporaryEcs.stackId }}",
         "retainAllResources": false
       }
@@ -970,20 +944,8 @@
       "ParameterGroups": [
         {
           "Parameters": [
-            "regionId"
-          ],
-          "Label": {
-            "default": {
-              "zh-cn": "地域信息",
-              "en": "Region"
-            }
-          }
-        },
-        {
-          "Parameters": [
             "codeSource",
-            "codeSourceUrl",
-            "branch"
+            "codeSourceUrl"
           ],
           "SubTitle": "代码源链接一般来自代码源步骤的输出",
           "Label": {

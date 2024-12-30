@@ -5,21 +5,17 @@ Description:
   en: Build and deploy the local code
   zh-cn: 本地构建并部署
 Parameters:
-  regionId:
-    Description:
-      en: The ID of region
-      zh-cn: 地域ID
-    Type: String
-    Default: '{{ ACS::RegionId }}'
-    AssociationProperty: RegionId
   instanceId:
+    Label:
+      en: InstanceId
+      zh-cn: ECS实例ID
     Description:
       en: The ID of ECS instance
       zh-cn: ECS实例ID
     Type: String
     AssociationProperty: ALIYUN::ECS::Instance::InstanceId
     AssociationPropertyMetadata:
-      RegionId: regionId
+      RegionId: '{{ ACS::RegionId }}'
   codeSource:
     Label:
       en: CodeResource
@@ -35,21 +31,6 @@ Parameters:
     Type: String
     AssociationPropertyMetadata:
       PropertyType: ref
-  branch:
-    Label:
-      en: Branch
-      zh-cn: 分支
-    Description:
-      en: Branch, pull default branch if not set
-      zh-cn: 代码仓库分支，不填拉取默认分支
-    Type: String
-    Default: ''
-    AssociationPropertyMetadata:
-      Visible:
-        Condition:
-          Fn::Equals:
-            - ${codeSource}
-            - 'git'
   isDockerBuild:
     Label:
       en: IsDockerBuild
@@ -59,6 +40,15 @@ Parameters:
       zh-cn: 如果为true，会为您在ECS上自动安装Docker。
     Type: Boolean
     Default: true
+  workingDir:
+    Label:
+      en: WorkingDir
+      zh-cn: 工作目录
+    Type: String
+    Default: /root/workspace/{{ACS::ExecutionId}}
+    Description:
+      en: The code is pulled to this directory and the build deployment script is executed in this directory as a working directory.
+      zh-cn: 代码会被拉取到该目录，构建部署脚本也会以该目录作为执行的工作目录。
   buildAndDeployScript:
     Label:
       en: buildAndDeployScript
@@ -79,11 +69,15 @@ Tasks:
       en: Download code from OSS
       zh-cn: 从OSS下载代码
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId: '{{ instanceId }}'
       sourceType: https
       sourcePath: '{{ codeSourceUrl }}'
-      destinationDir: /root/workspace/{{ACS::ExecutionId}}
+      destinationDir: '{{ workingDir }}'
+    Outputs:
+      commandOutput:
+        Type: String
+        ValueSelector: commandOutput
   - Name: downloadCodeFromGit
     Action: ACS::ECS::RunCommand
     When:
@@ -94,7 +88,7 @@ Tasks:
       en: Download code from git
       zh-cn: 从git下载代码
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId: '{{ instanceId }}'
       commandType: RunShellScript
       commandContent: |-
@@ -131,13 +125,13 @@ Tasks:
         esac
         
         echo "Git installation script has completed."
-        mkdir -p /root/workspace/{{ACS::ExecutionId}}
-        cd /root/workspace/{{ACS::ExecutionId}}
-        if [ -n "{{ branch }}" ]; then
-          git clone --branch {{ branch }} {{ codeSourceUrl }} .
-        else
-          git clone {{ codeSourceUrl }} .
-        fi
+        mkdir -p {{ workingDir }}
+        cd {{ workingDir }}
+        git clone {{ codeSourceUrl }} .
+    Outputs:
+      commandOutput:
+        Type: String
+        ValueSelector: invocationOutput
   - Name: installDocker
     When:
       Fn::Equals:
@@ -148,18 +142,41 @@ Tasks:
       zh-cn: 安装Docker环境
     Action: ACS::ECS::ConfigureOOSPackageWithTemporaryURL
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId: '{{ instanceId }}'
       action: install
       packageName: ACS-Extension-DockerCE-1853370294850618
+    Outputs:
+      commandOutput:
+        Type: String
+        ValueSelector: commandOutput
   - Name: buildAndDeploy
     Action: ACS::ECS::RunCommand
     Description:
       en: Build and deploy
       zh-cn: 构建并部署
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId: '{{ instanceId }}'
       commandType: RunShellScript
-      workingDir: /root/workspace/{{ACS::ExecutionId}}
+      workingDir: '{{ workingDir }}'
       commandContent: '{{ buildAndDeployScript }}'
+      maxRetryInterval: 12
+      timeout: 3600
+    Outputs:
+      commandOutput:
+        Type: String
+        ValueSelector: invocationOutput
+Outputs:
+  downloadCodeFromOssOutput:
+    Type: String
+    Value: '{{ downloadCodeFromOss.commandOutput }}'
+  downloadCodeFromGitOutput:
+    Type: String
+    Value: '{{ downloadCodeFromGit.commandOutput }}'
+  installDockerOutput:
+    Type: String
+    Value: '{{ installDocker.commandOutput }}'
+  buildAndDeployOutput:
+    Type: String
+    Value: '{{ buildAndDeploy.commandOutput }}'

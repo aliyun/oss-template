@@ -1,0 +1,56 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "name-en": "ACS::ECS::EnableDiskEncryptionByDefault",
+    "name-zh-cn": "开启并修改云盘默认加密"
+  },
+  "Parameters": {
+    "regionId": {
+      "Type": "String",
+      "AssociationProperty": "RegionId"
+    },
+    "KMSKeyId": {
+      "Type": "String"
+    }
+  },
+  "RamRole": "",
+  "Tasks": [
+    {
+      "Name": "EnableDiskEncryptionByDefault",
+      "Action": "ACS::ExecuteApi",
+      "Description": "EnableDiskEncryptionByDefault",
+      "Properties": {
+        "Service": "ECS",
+        "API": "EnableDiskEncryptionByDefault",
+        "Parameters": {
+          "RegionId": "{{ regionId }}"
+        }
+      },
+      "Outputs": {
+        "RequestId": {
+          "Type": "String",
+          "ValueSelector": ".RequestId"
+        }
+      }
+    },
+    {
+      "Name": "ModifyDiskDefaultKMSKeyId",
+      "Action": "ACS::ECS::ModifyDiskDefaultKMSKeyId",
+      "Description": "",
+      "OnError": "ACS::NEXT",
+      "OnSuccess": "ACS::END",
+      "Properties": {
+        "regionId": "{{ regionId }}",
+        "KMSKeyId": "{{ KMSKeyId }}"
+      }
+    },
+    {
+      "Name": "DisableDiskEncryptionByDefault",
+      "Action": "ACS::ECS::DisableDiskEncryptionByDefault",
+      "Description": "",
+      "Properties": {
+        "regionId": "{{ regionId }}"
+      }
+    }
+  ]
+}

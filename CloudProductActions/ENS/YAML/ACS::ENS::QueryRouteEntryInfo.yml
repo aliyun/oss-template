@@ -1,0 +1,29 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: Query ENS route entry ID and route entry information
+  zh-cn: 查询ENS路由条目ID及信息
+  name-en: ACS::ENS::QueryRouteEntryInfo
+  name-zh-cn: 查询ENS路由条目ID及信息
+Parameters:
+  routeTableId:
+    Description:
+      en: RouteTableId
+      zh-cn: 路由条目ID
+    Type: String
+Tasks:
+  - Name: getRouteEntryList
+    Action: ACS::ExecuteApi
+    Description: 查询ENS路由条目列表
+    Properties:
+      Parameters:
+        RouteTableId: "{{ routeTableId }}"
+      Service: ens
+      API: DescribeEnsRouteEntryList
+    Outputs:
+      RouteEntryInfo:
+        Type: List
+        ValueSelector: .RouteEntrys[]
+Outputs:
+  routeEntryInfo:
+    Type: List
+    Value: "{{ getRouteEntryList.RouteEntryInfo }}"

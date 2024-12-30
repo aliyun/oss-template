@@ -1,0 +1,362 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  name-en: ACS-ECS-BulkyDescribeSavingsPlanEstimationPrice
+  name-zh-cn: 批量测算询价ECS实例以及数据盘SP类型
+  en: Batch calculation inquiry for ECS instances and data disk SP types
+  zh-cn: 批量测算询价ECS实例以及数据盘SP类型
+Parameters:
+  regionId:
+    Type: String
+    Label:
+      en: RegionId
+      zh-cn: 地域ID
+    AssociationProperty: RegionId
+    Default: '{{ ACS::RegionId }}'
+  targets:
+    Type: Json
+    Label:
+      en: TargetInstance
+      zh-cn: 目标实例
+    AssociationProperty: Targets
+    AssociationPropertyMetadata:
+      ResourceType: resourceType
+      RegionId: regionId
+      Status: Running
+  planType:
+    Type: String
+    Label:
+      en: PlanType
+      zh-cn: 计划类型
+    AllowedValues:
+      - ecs
+      - universal
+    Default: ecs
+  instanceTypeScope:
+    Type: String
+    Label:
+      en: InstanceTypeScope
+      zh-cn: 购买方式
+    AllowedValues:
+      - InstanceTypeFamily
+      - InstanceTypeFamilyGroup
+    Default: InstanceTypeFamily
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ${planType}
+            - ecs
+  estimationResource:
+    Type: String
+    Label:
+      en: estimationResource
+      zh-cn: 数据盘节省数据类型
+    AllowedValues:
+      - ''
+      - datadisk
+    Default: ''
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ${planType}
+            - ecs
+  offeringType:
+    Type: String
+    Label:
+      en: OfferingType
+      zh-cn: 产品类型
+    AllowedValues:
+      - All Upfront
+      - Partial Upfront
+      - No Upfront
+    Default: All Upfront
+  productType:
+    Type: String
+    Label:
+      en: productType
+      zh-cn: 环境类型
+    AllowedValues:
+      - savingplan_common_public_cn
+      - savingplan_common_public_intl
+    Default: savingplan_common_public_cn
+  periodUnit:
+    Type: String
+    Label:
+      en: PeriodUnit
+      zh-cn: 时长单位
+    AllowedValues:
+      - Year
+    Default: Year
+  period:
+    Label:
+      en: Period
+      zh-cn: 续费时长
+    Type: Number
+    Default: 1
+  rateControl:
+    Label:
+      en: RateControl
+      zh-cn: 任务执行的并发比率
+    Type: Json
+    AssociationProperty: RateControl
+    Default:
+      Mode: Concurrency
+      MaxErrors: 0
+      Concurrency: 10
+  OOSAssumeRole:
+    Label:
+      en: OOSAssumeRole
+      zh-cn: OOS扮演的RAM角色
+    Type: String
+    Default: ''
+Tasks:
+  - Name: getInstance
+    Description:
+      en: Views the ECS instances
+      zh-cn: 获取ECS实例
+    Action: ACS::SelectTargets
+    Properties:
+      ResourceType: ALIYUN::ECS::Instance
+      RegionId: '{{ regionId }}'
+      Filters:
+        - '{{ targets }}'
+    Outputs:
+      instanceIds:
+        Type: List
+        ValueSelector: Instances.Instance[].InstanceId
+  - Name: describeSavingsPlanEstimationEcs
+    Action: ACS::ExecuteAPI
+    Description:
+      en: Calculate savings plan by instance
+      zh-cn: 按实例测算节省计划
+    Properties:
+      Service: ECS
+      API: DescribeSavingsPlanEstimation
+      Parameters:
+        RegionId: '{{ regionId }}'
+        ResourceId: '{{ ACS::TaskLoopItem }}'
+        PlanType: '{{ planType }}'
+        OfferingType: '{{ offeringType }}'
+        PeriodUnit: '{{ periodUnit }}'
+        Period: '{{ period }}'
+        InstanceTypeScope: '{{ instanceTypeScope }}'
+    Outputs:
+      result:
+        Type: Json
+        ValueSelector: .
+      groupResult:
+        Type: Json
+        ValueSelector: . | select(.InstanceTypeFamilyGroup ) | .
+      noGroupResult:
+        Type: Json
+        ValueSelector: . | select(.InstanceTypeFamilyGroup == null) | .
+    Loop:
+      Items: '{{ getInstance.instanceIds }}'
+      RateControl: '{{ rateControl }}'
+      Outputs:
+        results:
+          AggregateType: Fn::ListJoin
+          AggregateField: result
+        groupResults:
+          AggregateType: Fn::ListJoin
+          AggregateField: groupResult
+        noGroupResults:
+          AggregateType: Fn::ListJoin
+          AggregateField: noGroupResult
+  - Name: describeSavingsPlanEstimationDatadisk
+    Action: ACS::ExecuteAPI
+    When:
+      Fn::Equals:
+        - '{{ estimationResource }}'
+        - datadisk
+    Description:
+      en: Calculate savings plan by instance
+      zh-cn: 按数据盘测算节省计划
+    Properties:
+      Service: ECS
+      API: DescribeSavingsPlanEstimation
+      Parameters:
+        RegionId: '{{ regionId }}'
+        ResourceId: '{{ ACS::TaskLoopItem }}'
+        PlanType: universal
+        OfferingType: '{{ offeringType }}'
+        PeriodUnit: '{{ periodUnit }}'
+        Period: '{{ period }}'
+        InstanceTypeScope: '{{ instanceTypeScope }}'
+        EstimationResource: '{{ estimationResource }}'
+    Outputs:
+      result:
+        Type: Json
+        ValueSelector: .
+      allNumber:
+        Type: Number
+        ValueSelector: .CommittedAmount
+    Loop:
+      Items: '{{ getInstance.instanceIds }}'
+      RateControl: '{{ rateControl }}'
+      Outputs:
+        results:
+          AggregateType: Fn::ListJoin
+          AggregateField: result
+        allNumbers:
+          AggregateType: Fn::Sum
+          AggregateField: allNumber
+  - Name: bulkyDescribeSPPriceByInstanceGroupInstanceTypeFamily
+    Action: ACS::ECS::DescribeSavingsPlanPriceByInstanceGroup
+    Description:
+      en: Bulky describe savings plan price by instance group (InstanceTypeFamily)
+      zh-cn: 批量根据实例分组进行SP询价 (按规格族)
+    Properties:
+      regionId: '{{ regionId }}'
+      targetGroupOfInstanceFamilyGroup: '{{ ACS::TaskLoopItem }}'
+    Outputs:
+      result:
+        Type: Json
+        ValueSelector: .results
+    Loop:
+      Items:
+        Fn::Jq:
+          - First
+          - map(select(. != null)) |  group_by(.InstanceTypeFamily)
+          - '{{ describeSavingsPlanEstimationEcs.noGroupResults }}'
+      RateControl:
+        MaxErrors: 0
+        Mode: Concurrency
+        Concurrency: 1
+      Outputs:
+        priceResults:
+          AggregateType: Fn::ListJoin
+          AggregateField: result
+  - Name: bulkyDescribeSPPriceByInstanceGroupInstanceTypeFamilyGroup
+    Action: ACS::ECS::DescribeSavingsPlanPriceByInstanceGroup
+    When:
+      Fn::Equals:
+        - '{{ instanceTypeScope }}'
+        - InstanceTypeFamilyGroup
+    Description:
+      en: Bulky describe savings plan price by instance group (InstanceTypeFamilyGroup)
+      zh-cn: 批量根据实例分组进行SP询价 （按规格族套餐）
+    Properties:
+      regionId: '{{ regionId }}'
+      targetGroupOfInstanceFamilyGroup: '{{ ACS::TaskLoopItem }}'
+    Outputs:
+      result:
+        Type: Json
+        ValueSelector: .results
+    Loop:
+      Items:
+        Fn::Jq:
+          - First
+          - map(select(. != null)) |  group_by(.InstanceTypeFamilyGroup)
+          - '{{ describeSavingsPlanEstimationEcs.groupResults }}'
+      RateControl:
+        MaxErrors: 0
+        Mode: Concurrency
+        Concurrency: 1
+      Outputs:
+        groupPriceResults:
+          AggregateType: Fn::ListJoin
+          AggregateField: result
+  - Name: getSubscriptionPrice
+    Action: ACS::ExecuteAPI
+    When:
+      Fn::And:
+        - Fn::Equals:
+            - '{{ estimationResource }}'
+            - datadisk
+        - Fn::Not:
+            Fn::Equals:
+              - '{{ describeSavingsPlanEstimationDatadisk.allNumbers }}'
+              - Null
+    Description:
+      en: Get Subscription Price
+      zh-cn: 节省计划新购询价
+    Properties:
+      Service: bssopenapi
+      API: GetSubscriptionPrice
+      Parameters:
+        ServicePeriodUnit: Year
+        SubscriptionType: Subscription
+        ProductCode: savingplan
+        OrderType: NewOrder
+        ServicePeriodQuantity: '{{ period }}'
+        ProductType: '{{ productType }}'
+        ModuleList:
+          - ModuleCode: offering_type
+            moduleIndex: 1,
+            Config:
+              Fn::Sub:
+                - spn_type:universal,commitment_cycle:byHour,CommitmentFee:{{ describeSavingsPlanEstimationDatadisk.allNumbers }},offering_type:${offeringType}
+                - offeringType:
+                    Fn::Select:
+                      - '{{offeringType}}'
+                      - All Upfront: total
+                        Partial Upfront: half
+                        No Upfront: zero
+    Outputs:
+      priceResults:
+        Type: Json
+        ValueSelector: .
+Outputs:
+  PriceResults:
+    Type: Json
+    Value: '{{ bulkyDescribeSPPriceByInstanceGroupInstanceTypeFamily.priceResults }}'
+  GroupPriceResults:
+    Type: List
+    Value: '{{ bulkyDescribeSPPriceByInstanceGroupInstanceTypeFamilyGroup.groupPriceResults }}'
+  DatadiskPriceResults:
+    Type: Json
+    Value: '{{ getSubscriptionPrice.priceResults }}'
+  GroupInstanceInfos:
+    Type: Json
+    Value:
+      Fn::Jq:
+        - First
+        - map(select(. != null)) | group_by(.InstanceTypeFamilyGroup)
+        - '{{ describeSavingsPlanEstimationEcs.groupResults }}'
+  InstanceInfos:
+    Type: Json
+    Value:
+      Fn::Jq:
+        - First
+        - map(select(. != null)) | group_by(.InstanceTypeFamily)
+        - '{{ describeSavingsPlanEstimationEcs.noGroupResults }}'
+  DatadiskInfos:
+    Type: Json
+    Value:
+      Fn::Jq:
+        - First
+        - group_by(.{{ instanceTypeScope }})
+        - '{{ describeSavingsPlanEstimationDatadisk.results }}'
+RamRole: '{{ OOSAssumeRole }}'
+Metadata:
+  ALIYUN::OOS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - RegionId
+          - resourceType
+          - targets
+          - instanceTypeScope
+          - estimationResource
+          - productType
+        Label:
+          default:
+            zh-cn: 选择实例
+            en: Select Ecs Instances
+      - Parameters:
+          - planType
+          - offeringType
+          - periodUnit
+          - period
+        Label:
+          default:
+            zh-cn: 执行命令选型
+            en: run command options
+      - Parameters:
+          - rateControl
+          - OOSAssumeRole
+        Label:
+          default:
+            zh-cn: 高级选项
+            en: Control Options

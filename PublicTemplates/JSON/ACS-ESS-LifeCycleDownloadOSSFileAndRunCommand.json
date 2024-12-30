@@ -25,6 +25,10 @@
       "Type": "String"
     },
     "URLExpirationTime": {
+      "Label": {
+        "en": "OSSFileDownloadURLExpirationTime",
+        "zh-cn": "OSS文件下载链接的过期时间"
+      },
       "Description": {
         "en": "Expiration time of OSS file download url",
         "zh-cn": "OSS文件下载链接的过期时间"

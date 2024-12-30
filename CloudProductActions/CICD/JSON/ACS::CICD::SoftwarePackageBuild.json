@@ -7,15 +7,6 @@
     "zh-cn": "构建软件包（如jar包）并上传到OSS （仅支持在linux机器构建)"
   },
   "Parameters": {
-    "regionId": {
-      "Label": {
-        "en": "region",
-        "zh-cn": "地域"
-      },
-      "Type": "String",
-      "Default": "{{ ACS::RegionId }}",
-      "AssociationProperty": "RegionId"
-    },
     "codeSource": {
       "Label": {
         "en": "CodeResource",
@@ -35,28 +26,6 @@
       "Type": "String",
       "AssociationPropertyMetadata": {
         "PropertyType": "ref"
-      }
-    },
-    "branch": {
-      "Label": {
-        "en": "Branch",
-        "zh-cn": "分支"
-      },
-      "Description": {
-        "en": "Branch, pull default branch if not set",
-        "zh-cn": "代码仓库分支，不填拉取默认分支"
-      },
-      "Type": "String",
-      "Default": "",
-      "AssociationPropertyMetadata": {
-        "Visible": {
-          "Condition": {
-            "Fn::Equals": [
-              "${codeSource}",
-              "git"
-            ]
-          }
-        }
       }
     },
     "buildType": {
@@ -86,7 +55,7 @@
       "Default": "",
       "AssociationProperty": "ALIYUN::ECS::Instance::InstanceId",
       "AssociationPropertyMetadata": {
-        "RegionId": "regionId",
+        "RegionId": "{{ ACS::RegionId }}",
         "Visible": {
           "Condition": {
             "Fn::Equals": [
@@ -271,7 +240,7 @@
       "Type": "String",
       "AssociationProperty": "ALIYUN::OSS::Bucket::BucketName",
       "AssociationPropertyMetadata": {
-        "RegionId": "regionId"
+        "RegionId": "{{ ACS::RegionId }}"
       }
     },
     "bucketDir": {
@@ -303,7 +272,7 @@
         "zh-cn": "创建临时ecs"
       },
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "stackName": {
           "Fn::Replace": [
             {
@@ -412,7 +381,7 @@
         "zh-cn": "从OSS下载代码"
       },
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -445,7 +414,7 @@
         "zh-cn": "从git下载代码"
       },
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -459,7 +428,7 @@
           ]
         },
         "commandType": "RunShellScript",
-        "commandContent": "#!/bin/bash\n# Function to install git on Ubuntu/Debian\ninstall_git_debian() {\n    echo \"Installing git...\"\n    sudo apt-get update\n    sudo apt-get install git -y\n}\n\n# Function to install git on CentOS/Red Hat\ninstall_git_centos() {\n    echo \"Installing git...\"\n    sudo yum install git -y\n}\n\n# Identify the Operating System\n. /etc/os-release\n\ncase $ID in\n    ubuntu|debian)\n        echo \"Detected system: Ubuntu/Debian\"\n        install_git_debian\n        ;;\n    centos|rhel|alinux)\n        echo \"Detected system: CentOS/Red Hat\"\n        install_git_centos\n        ;;\n    *)\n        echo \"Unsupported Operating System: $ID\"\n        exit 1\n        ;;\nesac\n\necho \"Git installation script has completed.\"\nmkdir -p /root/workspace/{{ACS::ExecutionId}}\ncd /root/workspace/{{ACS::ExecutionId}}\n\nif [ -n \"{{ branch }}\" ]; then\n  git clone --branch {{ branch }} {{ codeSourceUrl }} .\nelse\n  git clone {{ codeSourceUrl }} .\nfi"
+        "commandContent": "#!/bin/bash\n# Function to install git on Ubuntu/Debian\ninstall_git_debian() {\n    echo \"Installing git...\"\n    sudo apt-get update\n    sudo apt-get install git -y\n}\n\n# Function to install git on CentOS/Red Hat\ninstall_git_centos() {\n    echo \"Installing git...\"\n    sudo yum install git -y\n}\n\n# Identify the Operating System\n. /etc/os-release\n\ncase $ID in\n    ubuntu|debian)\n        echo \"Detected system: Ubuntu/Debian\"\n        install_git_debian\n        ;;\n    centos|rhel|alinux)\n        echo \"Detected system: CentOS/Red Hat\"\n        install_git_centos\n        ;;\n    *)\n        echo \"Unsupported Operating System: $ID\"\n        exit 1\n        ;;\nesac\n\necho \"Git installation script has completed.\"\nmkdir -p /root/workspace/{{ACS::ExecutionId}}\ncd /root/workspace/{{ACS::ExecutionId}}\ngit clone {{ codeSourceUrl }} ."
       }
     },
     {
@@ -472,7 +441,7 @@
       },
       "Properties": {
         "workingDir": "/root/workspace/{{ACS::ExecutionId}}",
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -507,7 +476,7 @@
         },
         "Parameters": {
           "BucketName": "{{ bucketName }}",
-          "RegionId": "{{ regionId }}",
+          "RegionId": "{{ ACS::RegionId }}",
           "Expires": 6000,
           "Internal": true
         },
@@ -530,7 +499,7 @@
       },
       "Properties": {
         "workingDir": "/root/workspace/{{ACS::ExecutionId}}",
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "instanceId": {
           "Fn::If": [
             {
@@ -561,7 +530,7 @@
         "zh-cn": "删除临时ecs"
       },
       "Properties": {
-        "regionId": "{{ regionId }}",
+        "regionId": "{{ ACS::RegionId }}",
         "stackId": "{{ createTemporaryEcs.stackId }}",
         "retainAllResources": false
       }
@@ -582,20 +551,8 @@
       "ParameterGroups": [
         {
           "Parameters": [
-            "regionId"
-          ],
-          "Label": {
-            "default": {
-              "zh-cn": "地域信息",
-              "en": "Region"
-            }
-          }
-        },
-        {
-          "Parameters": [
             "codeSource",
-            "codeSourceUrl",
-            "branch"
+            "codeSourceUrl"
           ],
           "SubTitle": "代码源链接一般来自代码源步骤的输出",
           "Label": {

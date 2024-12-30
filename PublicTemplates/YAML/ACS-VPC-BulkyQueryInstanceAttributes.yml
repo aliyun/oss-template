@@ -1,0 +1,79 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  name-en: ACS-VPC-BulkyQueryInstanceAttributes
+  name-zh-cn: 批量查询VPC属性
+  en: Bulky query VPC attributes
+  zh-cn: 批量查询VPC属性
+Parameters:
+  regionId:
+    Type: String
+    Label:
+      en: RegionId
+      zh-cn: 地域ID
+    AssociationProperty: RegionId
+    Default: '{{ ACS::RegionId }}'
+  resourceIds:
+    Type: List
+    Label:
+      en: ResourceIds
+      zh-cn: VPC实例ID列表
+    AssociationProperty: ALIYUN::ECS::VPC::VPCId
+    AssociationPropertyMetadata:
+      RegionId: regionId
+  targetInfos:
+    Label:
+      en: TargetInfos
+      zh-cn: 要导出的VPC信息
+    Type: List
+  rateControl:
+    Label:
+      en: RateControl
+      zh-cn: 任务执行的并发比率
+    Type: Json
+    AssociationProperty: RateControl
+    Default:
+      Mode: Concurrency
+      MaxErrors: 0
+      Concurrency: 100
+  OOSAssumeRole:
+    Label:
+      en: OOSAssumeRole
+      zh-cn: OOS扮演的RAM角色
+    Type: String
+    Default: ''
+RamRole: '{{ OOSAssumeRole }}'
+Tasks:
+  - Name: queryInstanceAttributes
+    Description:
+      en: Query VPC attributes
+      zh-cn: 获取VPC属性
+    Action: ACS::VPC::QueryInstanceAttributes
+    Properties:
+      regionId: '{{ regionId }}'
+      instanceId: '{{ ACS::TaskLoopItem }}'
+    Loop:
+      Items: '{{ resourceIds }}'
+      RateControl: '{{ rateControl }}'
+Metadata:
+  ALIYUN::OOS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - targetInfos
+        Label:
+          default:
+            zh-cn: 设置参数
+            en: Configure Parameters
+      - Parameters:
+          - regionId
+          - resourceIds
+        Label:
+          default:
+            zh-cn: 选择VPC
+            en: Select VPC
+      - Parameters:
+          - rateControl
+          - OOSAssumeRole
+        Label:
+          default:
+            zh-cn: 高级选项
+            en: Control Options

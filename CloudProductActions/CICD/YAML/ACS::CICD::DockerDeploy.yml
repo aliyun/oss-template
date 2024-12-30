@@ -2,16 +2,9 @@ FormatVersion: OOS-2019-06-01
 Description:
   name-en: ACS::CICD::DockerDeploy
   name-zh-cn: 部署Docker镜像
-  en: Deploy docker image on multiple ECS instances (only support deploy on linux machine)
-  zh-cn: 在多个ECS实例上部署Docker镜像 （仅支持在linux机器部署）
+  en: Deploy docker image on multiple Linux ECS instances
+  zh-cn: 在多个Linux ECS实例上部署Docker镜像
 Parameters:
-  regionId:
-    Label:
-      en: region
-      zh-cn: 地域
-    Type: String
-    Default: '{{ ACS::RegionId }}'
-    AssociationProperty: RegionId
   targets:
     Type: Json
     Label:
@@ -20,15 +13,19 @@ Parameters:
     AssociationProperty: Targets
     AssociationPropertyMetadata:
       ResourceType: 'ALIYUN::ECS::Instance'
-      RegionId: regionId
+      RegionId: '{{ ACS::RegionId }}'
   acrType:
     Label:
       en: ACR Type
-      zh-cn: 容器镜像类型
+      zh-cn: 容器镜像服务类型
+    Description:
+      en: If you do not have a container image service, You can choose to open <a href="https://www.alibabacloud.com/help/en/acr/user-guide/create-a-container-registry-personal-edition-instance" target="_blank"> Personal edition </a> or <a href="https://www.alibabacloud.com/help/en/acr/user-guide/create-a-container-registry-enterprise-edition-instance" target="_blank"> Enterprise Edition </a>.
+      zh-cn: 如您还没有容器镜像服务，您可以选择开通<a href="https://help.aliyun.com/zh/acr/user-guide/create-a-container-registry-personal-edition-instance?spm=a2c4g.11186623.0.i7" target="_blank">个人版</a>或<a href="https://help.aliyun.com/zh/acr/user-guide/create-a-container-registry-enterprise-edition-instance?spm=a2c4g.11186623.0.i10" target="_blank">企业版</a>。
     Type: String
+    Default: Personal
     AllowedValues:
-      - Enterprise
       - Personal
+      - Enterprise
     AssociationPropertyMetadata:
       ValueLabelMapping:
         Enterprise: 企业版
@@ -128,7 +125,7 @@ Parameters:
     AssociationProperty: ALIYUN::CR::Repository::RepoName
     AssociationPropertyMetadata:
       AcrType: ${acrType}
-      RegionId: ${regionId}
+      RegionId: '{{ ACS::RegionId }}'
       InstanceId: ${acrId}
       RepoNamespaceName: ${namespace}
       RepoStatus: ALL
@@ -155,10 +152,10 @@ Parameters:
       en: whether to use internal link to pull image
       zh-cn: 是否通过内网链接拉取镜像
     Description:
-      en: False generates an public url, True generates an internal url. If you want to use internal link to pull image, please ensure that your image repository and ECS instance are in the same VPC (personal acr, accessible to all VPC machines, no separate configuration required), please refer to <a href="https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr" target="_blank">acr configuration access VPC</a>.
-      zh-cn: False生成公网URL，True生成内网URL。如果您想要使用内网链接拉取镜像，请确保您的镜像仓库和ECS实例在同一个VPC内(个人版acr，VPC机器均可访问，无需单独配置)，具体请参考<a href="https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr" target="_blank">acr配置访问VPC</a>。
+      en: If you want to use internal link to pull image, please ensure that your image repository and ECS instance are in the same VPC (personal acr, accessible to all VPC machines, no separate configuration required), please refer to <a href="https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr" target="_blank">acr configuration access VPC</a>.
+      zh-cn: 如果您想要使用内网链接拉取镜像，请确保您的镜像仓库和ECS实例在同一个VPC内(个人版acr，VPC机器均可访问，无需单独配置)，具体请参考<a href="https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr" target="_blank">acr配置访问VPC</a>。
     Type: Boolean
-    Default: true
+    Default: false
   rateControl:
     Label:
       en: RateControl
@@ -177,7 +174,7 @@ Tasks:
     Action: 'ACS::SelectTargets'
     Properties:
       ResourceType: 'ALIYUN::ECS::Instance'
-      RegionId: '{{ regionId }}'
+      RegionId: '{{ ACS::RegionId }}'
       Filters:
         - '{{ targets }}'
     Outputs:
@@ -190,7 +187,7 @@ Tasks:
       zh-cn: 在多个ECS实例上部署Docker镜像
     Action: 'ACS::CICD::DockerDeployOnSingleECS'
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId: '{{ ACS::TaskLoopItem }}'
       acrId: '{{ acrId }}'
       acrType: '{{ acrType }}'
@@ -207,12 +204,6 @@ Tasks:
 Metadata:
   ALIYUN::OOS::Interface:
     ParameterGroups:
-      - Parameters:
-          - regionId
-        Label:
-          default:
-            zh-cn: 地域信息
-            en: Region
       - Parameters:
           - targets
         Label:

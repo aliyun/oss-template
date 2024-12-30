@@ -12,6 +12,9 @@ Parameters:
       zh-cn: 平台
     AssociationProperty: ALIYUN::OOS::GitPlatform::Name
     Default: github
+    Description:
+      en: ECS in mainland China may experience unstable GitHub connection. It is recommended to use Gitee first.
+      zh-cn: 中国内地ECS可能会出现GitHub连接不稳定，建议优先使用Gitee。
     AllowedValues:
       - github
       - gitee
@@ -44,6 +47,9 @@ Parameters:
       Organization: ${organization}
       Owner: ${owner}
   instanceId:
+    Label:
+      en: InstanceId
+      zh-cn: ECS实例ID
     Description:
       en: The ID of ECS instance
       zh-cn: ECS实例ID
@@ -59,35 +65,177 @@ Parameters:
     Label:
       en: Branch
       zh-cn: 分支
+    AssociationProperty: ALIYUN::OOS::GitBranch::Name
+    AssociationPropertyMetadata:
+      Platform: ${platform}
+      Organization: ${organization}
+      Owner: ${owner}
+      RepoFullName: ${repository}
+    Type: String
+  downloadPath:
+    Label:
+      en: Download Path
+      zh-cn: 下载路径
     Description:
-      en: Branch, pull default branch if not set
-      zh-cn: 代码仓库分支，不填拉取默认分支
+      en: The path to download the code. If not set, it will be downloaded to /root/workspace/{current execution ID}. If you need to specify a path, please ensure that the path you provide does not have files, otherwise it will fail to pull.
+      zh-cn: 将代码下载到您的ECS上的路径。【不填默认下载到/root/workspace/{当前执行的ID}。如您需指定路径，请确保您提供的路径下没有文件，否则会拉取失败。】
     Type: String
     Default: ''
   isDockerBuild:
     Label:
       en: IsDockerBuild
-      zh-cn: 是否Docker构建
+      zh-cn: 是否使用Docker构建
     Description:
-      en: If true, docker will automatically be install on your ecs.
-      zh-cn: 如果为true，会为您在ECS上自动安装Docker。
+      en: If yes, it will detect if Docker is already installed on your ECS, and if not, it will be installed automatically for you.
+      zh-cn: 如果选择是，会检测您的ECS上是否已安装Docker，如果没有会为您自动安装。
     Type: Boolean
-    Default: true
+    Default: false
+  buildOption:
+    Label:
+      en: buildOption
+      zh-cn: 构建部署模式
+    Description:
+      en: For automated mode, you only need to provide the relevant information, and the execution will automatically complete the docker build image and the docker run startup container. You can also choose custom scripting mode to manually write build deployment scripts.
+      zh-cn: 对于自动化模式，您仅需提供相关信息，执行会自动完成docker build构建镜像和docker run启动容器。您也可以选择自定义脚本模式，手动编写构建部署脚本。
+    Type: String
+    Default: Automation
+    AllowedValues:
+      - Automation
+      - Script
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ${isDockerBuild}
+            - true
+      ValueLabelMapping:
+        Automation: 自动化模式
+        Script: 自定义脚本模式
+  dockerFilePath:
+    Label:
+      en: Dockerfile Path
+      zh-cn: Dockerfile路径
+    Description:
+      en: Please drop down to select the Dockerfile in the code.
+      zh-cn: 请下拉选择代码中的Dockerfile。
+    Type: String
+    Default: ''
+    AssociationProperty: ALIYUN::OOS::GitContent::Content
+    AssociationPropertyMetadata:
+      Platform: ${platform}
+      Owner: ${owner}
+      OrgId: ${organization}
+      RepoFullName: ${repository}
+      Branch: ${branch}
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ${buildOption}
+            - Automation
+      Required:
+        Condition:
+          Fn::Equals:
+            - ${buildOption}
+            - Automation
+  contextPath:
+    Label:
+      en: Context Path
+      zh-cn: 上下文路径
+    Description:
+      en: Context Path as the path of the context directory relative to the root directory of the code repository
+      zh-cn: docker build命令执行的上下文路径, 填写相对于代码库根目录的路径，如.或./config/。如不填写，默认为Dockerfile文件所在目录。
+    Type: String
+    Default: ''
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ${buildOption}
+            - Automation
+  dockerRunOptions:
+    Label:
+      en: DockerRunOptions
+      zh-cn: Docker运行选项
+    Description:
+      en: DockerRunOptions, represents the options of the command "docker run", such as "-p 80:80". These will be added to the docker run command. Note that --name is not open for specification, OOS will automatically generate the default container name.
+      zh-cn: docker run命令的选项, 例如"-p 80:80"，这些选项会被添加到docker run命令中。注意，--name不开放指定，由OOS自动生成默认容器名。
+    Type: String
+    AllowedPattern: ^(?!.*--name).*$
+    Default: ''
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Equals:
+            - ${buildOption}
+            - Automation
   buildAndDeployScript:
     Label:
       en: buildAndDeployScript
       zh-cn: 构建部署脚本
+    Description:
+      en: Script execution takes the root directory of the code as its working directory.
+      zh-cn: 脚本执行会以您指定的下载路径作为工作路径。
     Type: String
     MaxLength: 16384
     AssociationProperty: ALIYUN::OOS::Command::CommandContent
+    Default: ''
     AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Not:
+            Fn::Equals:
+              - ${buildOption}
+              - Automation
       CommandType: RunShellScript
-    Default: |-
-      # sample java deploy script
-      set -e
-      yum install -y maven-3.5.4
-      mvn package
-      java -jar target/sample-spring-1.0-SNAPSHOT.jar &
+      Value:
+        - Condition:
+            Fn::And:
+              - Fn::Equals:
+                  - ${isDockerBuild}
+                  - true
+              - Fn::Equals:
+                  - ${buildOption}
+                  - Script
+          Value: |-
+            ##### 请注意不要在这里填写Dockerfile内容，这里应该填写用于构建部署的shell命令，可参考下面的示例。
+            ##### Please do not fill in the Dockerfile content here, but fill in the build command, refer to the example below.
+
+            ### Build latest image
+            # docker build -f Dockerfile -t myapp:latest .
+            # container_name="my-container"
+
+            ### Stop the previous version of the container (if any)
+            # container_id=$(docker ps -aq -f name=${container_name}) 
+            # if [ -n "$container_id" ]; then
+            #   docker stop $container_id
+            #   docker rm $container_id
+            # fi
+
+            ### Start the current version of the container
+            # docker run -d -p 8080:8080 --name ${container_name} myapp:latest
+
+            ##### end
+        - Condition:
+            Fn::Equals:
+              - ${isDockerBuild}
+              - false
+          Value: |-
+            ##### Sample Java Deploy Script 
+            ##### for ECS on Alibaba Cloud Linux 3.2104
+            
+            ### Build jar file.
+            # set -e
+            # yum install -y maven-3.5.4
+            # mvn package
+            
+            ### Stop the previous version of the application (if any) and deploy the current version.
+            # PID=$(ps -ef | grep "sample-spring-1.0-SNAPSHOT.jar" | grep -v "grep" | awk '{print $2}')
+            # if [ -n "$PID" ]; then
+            #   kill -9 $PID
+            # fi
+            # java -jar target/sample-spring-1.0-SNAPSHOT.jar &
+            
+            ##### end
 RamRole: ''
 Tasks:
   - Name: GitCodeRepo
@@ -98,10 +246,7 @@ Tasks:
       platform: '{{ platform }}'
       owner: '{{ owner }}'
       repository: '{{ repository }}'
-    Outputs:
-      authorizedUrl:
-        Type: String
-        ValueSelector: authorizedUrl
+      branch: '{{ branch }}'
   - Name: LocalBuildAndDeploy
     Action: ACS::CICD::LocalBuildAndDeploy
     Description: 拉取代码，构建并部署应用
@@ -110,9 +255,73 @@ Tasks:
       codeSource: git
       isDockerBuild: '{{ isDockerBuild }}'
       codeSourceUrl: '{{ GitCodeRepo.authorizedUrl }}'
-      branch: '{{ branch }}'
-      buildAndDeployScript: '{{ buildAndDeployScript }}'
-      regionId: '{{ ACS::RegionId }}'
+      buildAndDeployScript:
+        Fn::If:
+          - Fn::And:
+              - Fn::Equals:
+                  - '{{ buildOption }}'
+                  - Automation
+              - Fn::Equals:
+                  - '{{ isDockerBuild }}'
+                  - true
+          - Fn::Sub:
+              - |-
+                  repository=$(echo "{{repository}}" | sed 's/[^a-zA-Z0-9 ]/-/g')
+                  current_image_version={{platform}}-{{owner}}-$repository:{{ACS::ExecutionId}}
+                  docker build -f {{dockerFilePath}} -t $current_image_version ${FinalContextPath}
+                  
+                  container_name={{platform}}-{{owner}}-$repository
+                  container_id=$(docker ps -aq -f name=$container_name) 
+                  if [ -n "$container_id" ]; then
+                    docker stop $container_id
+                    docker rm $container_id
+                  fi
+                  
+                  docker run -d --name $container_name {{ dockerRunOptions }} $current_image_version
+              - FinalContextPath:
+                  Fn::If:
+                    - Fn::Equals:
+                        - '{{ contextPath }}'
+                        - ''
+                    - Fn::If:
+                        - Fn::ContainsSubString:
+                            - '{{ dockerFilePath }}'
+                            - /
+                        - Fn::Join:
+                            - /
+                            - Fn::RangeSelect:
+                                - 0
+                                - -1
+                                - Fn::Split:
+                                    - /
+                                    - '{{ dockerFilePath }}'
+                        - '.'
+                    - '{{ contextPath }}'
+          - '{{ buildAndDeployScript }}'
+      workingDir:
+        Fn::If:
+          - Fn::Equals:
+            - '{{ downloadPath }}'
+            - ''
+          - '/root/workspace/{{ACS::ExecutionId}}'
+          - '{{ downloadPath }}'
+    Outputs:
+      downloadCodeFromOssOutput:
+        Type: String
+        ValueSelector: downloadCodeFromOssOutput
+      downloadCodeFromGitOutput:
+        Type: String
+        ValueSelector: downloadCodeFromGitOutput
+      installDockerOutput:
+        Type: String
+        ValueSelector: installDockerOutput
+      buildAndDeployOutput:
+        Type: String
+        ValueSelector: buildAndDeployOutput
+Outputs:
+  commandOutput:
+    Type: String
+    Value: '{{ LocalBuildAndDeploy.buildAndDeployOutput }}'
 Metadata:
   ALIYUN::OOS::Interface:
     ParameterGroups:
@@ -122,13 +331,18 @@ Metadata:
           - organization
           - repository
           - branch
+          - downloadPath
         Label:
           default:
             zh-cn: 代码源配置
             en: Code Source Configuration
       - Parameters:
           - isDockerBuild
+          - buildOption
           - buildAndDeployScript
+          - dockerFilePath
+          - contextPath
+          - dockerRunOptions
         Label:
           default:
             zh-cn: 构建部署配置

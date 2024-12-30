@@ -82,6 +82,14 @@
         "zh-cn": "文件要下载到的目录，如/root/dir1/dir2 (linux), C:\\\\Users\\\\Administrator\\\\dir1\\\\dir2 (windows)"
       },
       "Type": "String"
+    },
+    "downloadWaitingTime": {
+      "Label": {
+        "en": "Waiting time for download (s)",
+        "zh-cn": "下载等待时间（秒）"
+      },
+      "Type": "Number",
+      "Default": 600
     }
   },
   "Tasks": [
@@ -139,7 +147,8 @@
         "instanceId": "{{ instanceId }}",
         "sourceType": "https",
         "sourcePath": "{{ generateUrl.temporaryUrl }}",
-        "destinationDir": "{{ destinationDir }}"
+        "destinationDir": "{{ destinationDir }}",
+        "timeout": "{{ downloadWaitingTime }}"
       }
     }
   ],
@@ -164,7 +173,8 @@
           "Parameters": [
             "regionId",
             "instanceId",
-            "destinationDir"
+            "destinationDir",
+            "downloadWaitingTime"
           ],
           "Label": {
             "default": {

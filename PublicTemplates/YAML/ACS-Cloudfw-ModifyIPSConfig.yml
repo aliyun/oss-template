@@ -1,0 +1,115 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: Modify the Cloudfw IPS config
+  zh-cn: 修改云防火墙IPS配置
+  name-en: ACS-Cloudfw-ModifyIPSConfig
+  name-zh-cn: 修改云防火墙IPS配置
+  categories:
+    - security
+Tasks:
+  - Name: describeDefaultIPSConfig
+    Action: ACS::ExecuteApi
+    Description:
+      en: Describe cloudfw default ips config
+      zh-cn: 查询云防火墙IPS默认配置
+    Properties:
+      Parameters: {}
+      Service: cloudfw
+      API: DescribeDefaultIPSConfig
+    Outputs:
+      RunMode:
+        Type: Number
+        ValueSelector: .RunMode
+      RuleClass:
+        Type: Number
+        ValueSelector: .RuleClass
+      CtiRules:
+        Type: Number
+        ValueSelector: .CtiRules
+      BasicRules:
+        Type: Number
+        ValueSelector: .BasicRules
+      PatchRules:
+        Type: Number
+        ValueSelector: .PatchRules
+  - Name: modifyDefaultIPSConfig
+    Action: ACS::ExecuteApi
+    Description:
+      en: Modify cloudfw ips config
+      zh-cn: 设置云防火墙IPS运行模式
+    Properties:
+      Service: cloudfw
+      Parameters:
+        CtiRules:
+          Fn::If:
+            - Fn::Equals:
+                - '{{ ctiRules }}'
+                - 1
+            - 1
+            - '{{ describeDefaultIPSConfig.CtiRules }}'
+        BasicRules:
+          Fn::If:
+            - Fn::Equals:
+                - '{{ basicRules }}'
+                - 1
+            - 1
+            - '{{ describeDefaultIPSConfig.BasicRules }}'
+        RunMode:
+          Fn::If:
+            - Fn::Equals:
+                - '{{ runMode }}'
+                - 1
+            - 1
+            - '{{ describeDefaultIPSConfig.RunMode }}'
+        PatchRules:
+          Fn::If:
+            - Fn::Equals:
+                - '{{ patchRules }}'
+                - 1
+            - 1
+            - '{{ describeDefaultIPSConfig.PatchRules }}'
+        RuleClass:
+          Fn::If:
+            - Fn::Or:
+                - Fn::Or:
+                    - Fn::Equals:
+                        - '{{ ruleClass }}'
+                        - 1
+                    - Fn::Equals:
+                        - '{{ ruleClass }}'
+                        - 2
+                - Fn::Equals:
+                    - '{{ ruleClass }}'
+                    - 3
+            - '{{ ruleClass }}'
+            - '{{ describeDefaultIPSConfig.RuleClass }}'
+      API: ModifyDefaultIPSConfig
+    Outputs: {}
+Parameters:
+  runMode:
+    Type: Number
+    Label: 拦截模式
+    Default: -1
+  ruleClass:
+    Type: Number
+    Label: 拦截模式等级，分为宽松(1)、中等(2)、严格(3)
+    Default: -1
+  ctiRules:
+    Type: Number
+    Label: 威胁情报
+    Default: -1
+  basicRules:
+    Type: Number
+    Label: 基础防御
+    Default: -1
+  patchRules:
+    Type: Number
+    Label: 虚拟补丁
+    Default: -1
+  OOSAssumeRole:
+    Label:
+      en: OOSAssumeRole
+      zh-cn: OOS扮演的RAM角色
+    Type: String
+    Default: ''
+RamRole: '{{ OOSAssumeRole }}'

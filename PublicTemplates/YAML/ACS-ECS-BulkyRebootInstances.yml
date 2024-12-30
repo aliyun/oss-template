@@ -1,7 +1,7 @@
 FormatVersion: OOS-2019-06-01
 Description:
-  en: Bulky restarts the ECS instances
-  zh-cn: 批量重启ECS实例
+  en: 'Bulky restarts the ECS instances, applicable to scenarios that require managing and restarting multiple ECS instances simultaneously, such as system updates and maintenance. During configuration, users need to provide the following required parameter information: Region ID (regionId), which specifies the region of the ECS instances to be restarted, and Target Instances (targets), which defines the specific ECS instances to be operated on. Upon execution, the template will return a list of the restarted instance IDs, enabling users to verify the status of the instance restart operations.'
+  zh-cn: 批量重启ECS实例，适用于需要同时管理和重启多台ECS实例的场景，例如系统更新和维护。在配置过程中，用户需要提供以下必填参数信息，地域ID（regionId）：用于指定需要重启实例的地域，目标实例（targets）：用于定义具体需要操作的ECS实例。模板在执行后会返回所有重启的实例ID列表，方便用户验证实例重启的状态。
   name-en: Bulky Reboot Instances
   name-zh-cn: 批量重启实例
   categories:

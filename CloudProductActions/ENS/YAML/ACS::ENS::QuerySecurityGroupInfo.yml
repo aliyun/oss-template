@@ -1,0 +1,22 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: Query ENS security group ID and information
+  zh-cn: 查询ENS安全组ID及信息
+  name-en: ACS::ENS::QuerySecurityGroupInfo
+  name-zh-cn: 查询ENS安全组ID及信息
+Tasks:
+  - Name: getSecurityGroupList
+    Action: ACS::ExecuteApi
+    Description: 查询ENS安全组列表
+    Properties:
+      Parameters: {}
+      Service: ens
+      API: DescribeSecurityGroups
+    Outputs:
+      SecurityGroupInfo:
+        Type: List
+        ValueSelector: .SecurityGroups.SecurityGroup[]
+Outputs:
+  securityGroupInfo:
+    Type: List
+    Value: "{{ getSecurityGroupList.SecurityGroupInfo }}"

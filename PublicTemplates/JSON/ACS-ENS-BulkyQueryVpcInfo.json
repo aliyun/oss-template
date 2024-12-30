@@ -1,0 +1,43 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "name-en": "ACS-ENS-BulkyQueryVpcInfo",
+    "name-zh-cn": "批量查询ENS网络信息",
+    "en": "Bulky query ENS vpc info",
+    "zh-cn": "批量查询ENS网络信息"
+  },
+  "Parameters": {
+    "rateControl": {
+      "Label": {
+        "en": "RateControl",
+        "zh-cn": "任务执行的并发比率"
+      },
+      "Type": "Json",
+      "AssociationProperty": "RateControl",
+      "Default": {
+        "Mode": "Concurrency",
+        "MaxErrors": 0,
+        "Concurrency": 10
+      }
+    },
+    "OOSAssumeRole": {
+      "Label": {
+        "en": "OOSAssumeRole",
+        "zh-cn": "OOS扮演的RAM角色"
+      },
+      "Type": "String",
+      "Default": ""
+    }
+  },
+  "RamRole": "{{ OOSAssumeRole }}",
+  "Tasks": [
+    {
+      "Name": "getVpc",
+      "Description": {
+        "en": "Views the ENS vpc",
+        "zh-cn": "获取ENS网络"
+      },
+      "Action": "ACS::ENS::QueryVpcInfo"
+    }
+  ]
+}

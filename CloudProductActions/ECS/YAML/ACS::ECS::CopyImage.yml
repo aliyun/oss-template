@@ -47,6 +47,12 @@ Parameters:
       zh-cn: 加密镜像使用的密钥ID
     Type: String
     Default: ""
+  targetImageDescription:
+    Label:
+      en: TargetImageDescription
+      zh-cn: 目标镜像描述
+    Type: String
+    Default: ''
   tags:
     Label:
       en: Tags
@@ -85,6 +91,7 @@ Tasks:
         DestinationImageName: '{{ targetImageName }}'
         Encrypted: '{{ encrypted }}'
         Tags: '{{ tags }}'
+        DestinationDescription: '{{targetImageDescription}}'
         KMSKeyId:
           'Fn::If':
             - 'Fn::Equals':
@@ -96,6 +103,9 @@ Tasks:
       imageId:
         ValueSelector: ImageId
         Type: String
+      imageIdWithRegion:
+        Type: List
+        ValueSelector: .|(.ImageId),"{{ targetRegionId }}"
   - Name: untilCopyImageReady
     Action: 'ACS::WaitFor'
     Description:
@@ -116,3 +126,6 @@ Outputs:
   imageId:
     Value: '{{ copyImage.imageId }}'
     Type: String
+  imageIdWithRegion:
+    Type: List
+    Value: '{{ copyImage.imageIdWithRegion }}'

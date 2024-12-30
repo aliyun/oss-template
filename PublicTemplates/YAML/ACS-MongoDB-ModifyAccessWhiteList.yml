@@ -1,0 +1,75 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: Modify mongoDB instance ip whitelist
+  zh-cn: 删除mongoDB集群IP白名单中的0.0.0.0/0
+  name-en: ACS-MongoDB-ModifyAccessWhiteList
+  name-zh-cn: 删除mongoDB集群IP白名单中的0.0.0.0/0
+  categories:
+    - security
+Tasks:
+  - Name: describeSecurityIps
+    Action: ACS::ExecuteAPI
+    Description:
+      en: Describes the whitelist
+      zh-cn: 获取白名单信息
+    Properties:
+      Service: dds
+      API: DescribeSecurityIps
+      Parameters:
+        DBInstanceId: '{{ dbInstanceId }}'
+        regionId: '{{ regionId }}'
+    Outputs:
+      securityIpGroups:
+        Type: List
+        ValueSelector: '.SecurityIpGroups.SecurityIpGroup[] | select(.SecurityIpList | contains("0.0.0.0/0")) | {"SecurityIpList": .SecurityIpList, "SecurityIpGroupName": .SecurityIpGroupName}'
+  - Name: deleteIpFromWhitelist
+    Action: ACS::ExecuteAPI
+    Description:
+      en: Delete ipaddress from whitelist
+      zh-cn: 从白名单删除IP
+    Properties:
+      Service: dds
+      API: ModifySecurityIps
+      Parameters:
+        regionId: '{{ regionId }}'
+        DBInstanceId: '{{ dbInstanceId }}'
+        ModifyMode: Delete
+        SecurityIps: '{{ securityIp }}'
+        SecurityIpGroupName:
+          Fn::Select:
+            - SecurityIpGroupName
+            - '{{ ACS::TaskLoopItem }}'
+    Outputs: {}
+    Loop:
+      Items: '{{ describeSecurityIps.securityIpGroups }}'
+      RateControl:
+        Mode: Concurrency
+        MaxErrors: 0
+        Concurrency: 1
+      Outputs: {}
+Parameters:
+  dbInstanceId:
+    Label:
+      en: mongodbInstanceId
+      zh-cn: mongoDB集群ID
+    Type: String
+  securityIp:
+    Label:
+      en: SecurityIp
+      zh-cn: 待删除的ip
+    Type: String
+    Default: 0.0.0.0/0
+  regionId:
+    Label:
+      en: RegionId
+      zh-cn: 地域ID
+    Type: String
+    AssociationProperty: RegionId
+    Default: '{{ ACS::RegionId }}'
+  OOSAssumeRole:
+    Label:
+      en: OOSAssumeRole
+      zh-cn: OOS扮演的RAM角色
+    Type: String
+    Default: ''
+RamRole: '{{ OOSAssumeRole }}'

@@ -1,0 +1,29 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: Query ENS snapshot ID and snapshot information
+  zh-cn: 查询ENS快照ID及快照信息
+  name-en: ACS::ENS::QuerySnapshotsInfo
+  name-zh-cn: 查询ENS快照ID及快照信息
+Parameters:
+  diskId:
+    Description:
+      en: The ID of disk
+      zh-cn: 磁盘ID
+    Type: String
+Tasks:
+  - Name: getSnapshotsList
+    Action: ACS::ExecuteApi
+    Description: 查询ENS快照列表
+    Properties:
+      Parameters:
+        DiskId: "{{ diskId }}"
+      Service: ens
+      API: DescribeSnapshots
+    Outputs:
+      SnapshotsInfo:
+        Type: List
+        ValueSelector: .Snapshots[]
+Outputs:
+  snapshotsInfo:
+    Type: List
+    Value: "{{ getSnapshotsList.SnapshotsInfo }}"

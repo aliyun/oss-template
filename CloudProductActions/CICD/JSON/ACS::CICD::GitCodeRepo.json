@@ -55,6 +55,20 @@
         "Organization": "${organization}",
         "Owner": "${owner}"
       }
+    },
+    "branch": {
+      "Label": {
+        "en": "Branch",
+        "zh-cn": "分支"
+      },
+      "AssociationProperty": "ALIYUN::OOS::GitBranch::Name",
+      "AssociationPropertyMetadata": {
+        "Platform": "${platform}",
+        "Organization": "${organization}",
+        "Owner": "${owner}",
+        "RepoFullName": "${repository}"
+      },
+      "Type": "String"
     }
   },
   "Tasks": [
@@ -82,7 +96,16 @@
   "Outputs": {
     "authorizedUrl": {
       "Type": "String",
-      "Value": "{{getGitCodeRepo.authorizedUrl}}"
+      "Value": {
+        "Fn::Join": [
+          " ",
+          [
+            "--branch",
+            "{{branch}}",
+            "{{getGitCodeRepo.authorizedUrl}}"
+          ]
+        ]
+      }
     }
   }
 }

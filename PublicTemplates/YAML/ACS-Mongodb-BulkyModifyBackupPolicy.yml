@@ -6,6 +6,9 @@ Description:
   zh-cn: 修改MongoDB实例的备份策略
 Parameters:
   regionId:
+    Label:
+      en: RegionId
+      zh-cn: 地域ID
     Description:
       en: The ID of region
       zh-cn: 地域ID
@@ -13,17 +16,26 @@ Parameters:
     AssociationProperty: RegionId
     Default: '{{ ACS::RegionId }}'
   instanceIds:
+    Label:
+      en: The Ids of instances
+      zh-cn: 实例ID列表
     Description:
       en: The Ids of instances
       zh-cn: 实例ID列表
     Type: List
   preferredBackupTime:
+    Label:
+      en: Preferred Backup Time
+      zh-cn: 执行备份时间
     Description:
       en: Backup Time
       zh-cn: 执行备份的时间，格式为HH:mmZ-HH:mmZ（UTC时间）。时间范围限制为1小时。
     Type: String
     Default: 03:00Z-04:00Z
   preferredBackupPeriod:
+    Label:
+      en: Preferred Backup Period
+      zh-cn: 备份周期
     Description:
       en: Backup Period
       zh-cn: 备份周期

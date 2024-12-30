@@ -1,7 +1,7 @@
 FormatVersion: OOS-2019-06-01
 Description:
-  en: Bulky starts the ECS instances
-  zh-cn: 批量启动ECS实例
+  en: 'Bulky starts the ECS instances, applicable to scenarios that require managing and starting multiple ECS instances simultaneously, such as application deployment and high-availability scenarios. During configuration, users need to provide the following required parameter information: Region ID (regionId), which specifies the region of the ECS instances to be started, and Target Instances (targets), which defines the specific ECS instances to be operated on. Upon execution, the template will return a list of the started instance IDs, enabling users to verify the status of the instance start operations.'
+  zh-cn: 批量启动ECS实例，适用于需要同时管理和启动多台ECS实例的场景，例如应用部署和高可用性场景。在配置过程中，用户需要提供以下必填参数信息，地域ID（regionId）：用于指定需要启动实例的地域，目标实例（targets）：用于定义具体需要操作的ECS实例。模板在执行后会返回所有启动的实例ID列表，方便用户验证实例启动的状态。
   name-en: Bulky Start Instances
   name-zh-cn: 批量启动实例
   categories:

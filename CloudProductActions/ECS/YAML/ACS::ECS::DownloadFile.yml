@@ -115,9 +115,17 @@ Tasks:
         if [ '{{ overwrite }}' = 'true' ] || [ ! -f "$destinationFile" ]; then
           if [ '{{sourceType}}' = 'local' ]; then
             wget "{{sourcePath}}" -O "$destinationFile" -q
+            result=$?
+            if [ $result -ne 0 ]; then
+              exit $result
+            fi
             echo "$destinationFile execute success."
           else
             acs-plugin-manager --exec -P oosutil --params  download_content,{{sourceType}},'"{{sourcePath}}"',\''{{ tokenInfo }}'\','{{destinationDir}}'
+            result=$?
+            if [ $result -ne 0 ]; then
+              exit $result
+            fi
           fi
         else
           echo "File already exists."

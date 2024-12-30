@@ -108,6 +108,10 @@
       }
     },
     "OOSAssumeRole": {
+      "Label": {
+        "en": "OOSAssumeRole",
+        "zh-cn": "OOS扮演的RAM角色"
+      },
       "Description": {
         "en": "The RAM role to be assumed by OOS.",
         "zh-cn": "OOS扮演的RAM角色。"

@@ -51,6 +51,7 @@ Tasks:
       InstanceId: '{{ InstanceId }}'
       Bandwidth: '{{ Bandwidth }}'
       AutoPay: true
+      NodeId: ALL
 - Name: DurationHour
   Action: ACS::Sleep
   Description:
@@ -71,3 +72,4 @@ Tasks:
       InstanceId: '{{ InstanceId }}'
       Bandwidth: 0
       AutoPay: true
+      NodeId: ALL

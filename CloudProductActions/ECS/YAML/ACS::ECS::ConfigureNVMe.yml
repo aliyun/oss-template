@@ -1,0 +1,82 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  name-en: ACS::ECS::ConfigureNVMe
+  name-zh-cn: 执行命令安装NVMe
+  en: Execute cloud assistant commands and modify instance parameters in ECS instances
+  zh-cn: 在ECS实例中执行云助手命令并修改实例参数
+Parameters:
+  regionId:
+    Label:
+      en: RegionId
+      zh-cn: 地域ID
+    Type: String
+    AssociationProperty: ALIYUN::ECS::RegionId
+    Default: '{{ ACS::RegionId }}'
+  instanceId:
+    Label:
+      en: ECSInstanceId
+      zh-cn: ECS实例ID
+    Type: String
+    AssociationProperty: ALIYUN::ECS::Instance::InstanceId
+    AssociationPropertyMetadata:
+      RegionId: regionId
+Tasks:
+  - Name: configureNVMe
+    Action: ACS::ECS::RunCommand
+    Description:
+      en: Executes a cloud assistant command
+      zh-cn: 执行云助手命令
+    Properties:
+      regionId: '{{ regionId }}'
+      commandContent: |-
+        #!/bin/bash
+        acs-plugin-manager --exec --plugin ecs_nvme_config --params --fix
+      instanceId: '{{instanceId}}'
+      commandType: RunShellScript
+    Outputs:
+      invocationOutput:
+        Type: String
+        ValueSelector: invocationOutput
+  - Name: RebootInstance
+    Action: ACS::ECS::RebootInstance
+    Description:
+      en: Restarts the ECS instances
+      zh-cn: 重启实例
+    Properties:
+      regionId: '{{ regionId }}'
+      instanceId: '{{ instanceId }}'
+    Outputs: {}
+  - Name: checkConfigureNVMe
+    Action: ACS::ECS::RunCommand
+    Description:
+      en: Executes a cloud assistant command
+      zh-cn: 重启后执行云助手命令
+    Properties:
+      regionId: '{{ regionId }}'
+      commandContent: |-
+        #!/bin/bash
+        acs-plugin-manager --exec --plugin ecs_nvme_config --params --check
+      instanceId: '{{instanceId}}'
+      commandType: RunShellScript
+    Outputs:
+      invocationOutput:
+        Type: String
+        ValueSelector: invocationOutput
+  - Name: modifyInstanceAttribute
+    Action: ACS::ExecuteApi
+    Description:
+      en: Modifies the information of an ECS instance
+      zh-cn: 修改ECS实例属性
+    Properties:
+      Service: ECS
+      API: ModifyInstanceAttribute
+      Parameters:
+        RegionId: '{{ regionId }}'
+        InstanceId: '{{ instanceId }}'
+        ImageOptions.CurrentOSNVMeSupported: true
+    Outputs: {}
+Outputs:
+  invocationOutput:
+    Type: String
+    Value:
+      Fn::Base64Decode: '{{ configureNVMe.invocationOutput }}'

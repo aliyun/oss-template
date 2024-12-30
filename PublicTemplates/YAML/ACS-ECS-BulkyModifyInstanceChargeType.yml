@@ -89,6 +89,11 @@ Parameters:
       - PayByBandwidth
       - PayByTraffic
       - ''
+    AssociationPropertyMetadata:
+      ValueLabelMapping:
+        PayByBandwidth: 按固定宽带
+        PayByTraffic: 按使用流量
+        '': 不修改计费方式
     Default: PayByTraffic
   rateControl:
     Label:
