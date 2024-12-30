@@ -20,6 +20,10 @@
       "Default": "https://oapi.dingtalk.com/robot/send?access_token=12345678900000"
     },
     "msgtype": {
+      "Label": {
+        "en": "Message type",
+        "zh-cn": "消息类型"
+      },
       "Description": {
         "en": "Message types",
         "zh-cn": "消息类型"
@@ -33,6 +37,10 @@
       "Default": "text"
     },
     "text": {
+      "Label": {
+        "en": "Text param",
+        "zh-cn": "文本参数"
+      },
       "Description": {
         "en": "Text param. If msgtype is text, this field is needed",
         "zh-cn": "文本参数。如果msgtype为text，则需要输入该字段"
@@ -53,6 +61,10 @@
       }
     },
     "link": {
+      "Label": {
+        "en": "Link param",
+        "zh-cn": "链接参数"
+      },
       "Description": {
         "en": "Link param. If msgtype is link, this field is needed",
         "zh-cn": "链接参数。如果“msgtype”为“link”，则需要输入该字段"
@@ -76,6 +88,10 @@
       }
     },
     "markdown": {
+      "Label": {
+        "en": "MarkDown param",
+        "zh-cn": "MarkDown参数"
+      },
       "Description": {
         "en": "MarkDown param. If msgtype is markdown, this field is needed",
         "zh-cn": "MarkDown参数。如果msgtype为markdown，则需要此字段"
@@ -97,6 +113,10 @@
       }
     },
     "at": {
+      "Label": {
+        "en": "@ people to read the notification",
+        "zh-cn": "@人们阅读通知"
+      },
       "Description": {
         "en": "@ people to read the notification",
         "zh-cn": "@人们阅读通知"

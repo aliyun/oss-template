@@ -1,7 +1,7 @@
 FormatVersion: OOS-2019-06-01
 Description:
-  en: Bulky replaces the system disk of ECS instances.
-  zh-cn: 批量更换ECS实例的系统盘
+  en: 'Bulky replace the system disks of ECS instances, applicable to scenarios that require system disk replacement on multiple ECS instances, such as system upgrades and fault recovery. During configuration, users need to provide the following required parameter information: Region ID (regionId), which specifies the region of the ECS instances where the system disks will be replaced, Image ID (imageId), which specifies the image to use for the system disk replacement, and Target Instances (targets), which defines the specific ECS instances to be operated on. Upon execution, the template provides the IDs of the new system disks, enabling users to verify the status of the system disk replacements.'
+  zh-cn: 批量更换ECS实例的系统盘，适用于需要对多台ECS实例进行系统盘替换的场景，例如系统升级和故障恢复等。在配置过程中，用户需要提供以下必填参数信息，地域ID（regionId）：用于指定更换系统盘的ECS实例所在的区域，镜像ID（imageId）：用于指定更换系统盘时使用的镜像，目标实例（targets）：用于定义具体需要操作的ECS实例。模板在执行后会返回新系统盘的ID列表，方便用户验证系统盘替换的状态。
   name-en: ACS-ECS-BulkyReplaceSystemDisk
   name-zh-cn: 批量更换ECS实例的系统盘
   categories:

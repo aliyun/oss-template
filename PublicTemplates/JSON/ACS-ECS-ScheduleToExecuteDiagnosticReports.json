@@ -37,6 +37,10 @@
       "Default": "{{ ACS::RegionId }}"
     },
     "targets": {
+      "Label": {
+        "en": "TargetInstance",
+        "zh-cn": "目标实例"
+      },
       "Type": "Json",
       "Description": "ECS实例",
       "AssociationProperty": "Targets",
@@ -95,6 +99,10 @@
       "Default": ""
     },
     "rateControl": {
+      "Label": {
+        "en": "RateControl",
+        "zh-cn": "任务执行的并发比率"
+      },
       "Description": "任务执行的并发比率",
       "Type": "Json",
       "AssociationProperty": "RateControl",

@@ -41,6 +41,10 @@ Parameters:
     Type: String
     AssociationProperty: TimeTriggerWeekly
     Default: '*'
+    AssociationPropertyMetadata:
+      Mode: '${startFirstOrStopFirst}'
+      StartTime: '${dailyStartTime}'
+      StopTime: '${dailyStopTime}'
   dailyStartTime:
     Label:
       en: DailyStartTime

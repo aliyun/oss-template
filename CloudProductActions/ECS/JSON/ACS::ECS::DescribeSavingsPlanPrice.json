@@ -91,6 +91,13 @@
               ".[].InstanceTypeFamily",
               "{{ targetInstanceGroup }}"
             ]
+          },
+          "InstanceTypeFamilyGroup": {
+            "Fn::Jq": [
+              "First",
+              ".[].InstanceTypeFamilyGroup",
+              "{{ targetInstanceGroup }}"
+            ]
           }
         }
       },

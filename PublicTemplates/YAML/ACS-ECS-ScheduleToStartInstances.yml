@@ -1,7 +1,7 @@
 FormatVersion: OOS-2019-06-01
 Description:
-  en: Schedule to starts the ECS instances
-  zh-cn: 定时启动ECS实例
+  en: 'Schedule to start the ECS instances, applicable to scenarios where ECS instances need to be started at scheduled times, such as automatically starting development or test environments within specific periods. During configuration, users need to provide the following required parameter information: Region ID (regionId), which specifies the region of the ECS instances to be operated on, Cron Expression (cron), which defines the schedule for the task, and Target Instances (targets), which defines the specific ECS instances to be operated on. Upon execution, the template will start the ECS instances according to the configured schedule.'
+  zh-cn: 定时启动ECS实例，适用于需要定时启动ECS实例的场景，例如按时间段自动开启开发环境或测试环境。在配置过程中，用户需要提供下列必填参数信息，地域ID（regionId）：用于指定操作实例的地域，cron表达式（cron）：用于定义任务的定时触发规则，目标实例（targets）：用于定义具体需要操作的ECS实例。模板在执行后会根据设置的时间表定时启动ECS实例。
   name-en: ACS-ECS-ScheduleToStartInstances
   name-zh-cn: 定时启动ECS实例
   categories:

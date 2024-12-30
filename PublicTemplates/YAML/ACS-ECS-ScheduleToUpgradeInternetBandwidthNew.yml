@@ -46,15 +46,15 @@ Parameters:
     Default: 10
   durationHour:
     Label:
-      en: The number of hours that the bandwidth upgrade lasts
-      zh-cn: 带宽升级持续时间
-    Description:
-      zh-cn: 单位：小时。持续时间最少4小时。带宽升级结束时间目前只支持整点时间
-      en: 'Unit: Hour. The bandwidth upgrade should last at least 4 hours. Upgrade only ends on the hour'
+      en: The number of hours that the bandwidth upgrade lasts(hours)
+      zh-cn: 带宽升级持续时间（小时）
     Type: Number
     MinValue: 4
     MaxValue: 10000
     Default: 4
+    AssociationProperty: ALIYUN::OOS::Component::BandwidthUpgradeDurationHour
+    AssociationPropertyMetadata:
+      TimerTrigger: '${timerTrigger}'
   rateControl:
     Label:
       en: RateControl

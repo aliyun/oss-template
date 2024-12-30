@@ -1,8 +1,8 @@
 {
   "FormatVersion": "OOS-2019-06-01",
   "Description": {
-    "en": "Schedules to execute specified template",
-    "zh-cn": "定时执行指定模板",
+    "en": "Schedules to execute specified template, applicable to scenarios where OOS templates need to be executed at specific intervals or time points, such as automated maintenance tasks and scheduled management tasks. During configuration, users need to provide the following required parameter information: Timer Trigger (timerTrigger), which configures the trigger type and expression, Template Name (templateName), which specifies the name of the OOS template to be executed, and Template Parameters (templateParameters), which are the parameters required for executing the template. Once defined, the template will trigger and execute the specified OOS template according to the configured schedule.",
+    "zh-cn": "定时执行指定模板，适用于需要在特定时间间隔或时间点执行OOS模板的场景，如自动化运维任务和定时管理任务。在配置过程中，用户需要提供以下必填参数信息，定时类型（timerTrigger）：配置触发类型和表达式，模板名称（templateName）：指定要执行的OOS模板名称，以及模板参数（templateParameters）：模板执行时所需的参数。模板在定义后会根据设置的时间表定时触发并执行指定的OOS模板。",
     "name-en": "ACS-ECS-ScheduleToExecuteTemplate",
     "name-zh-cn": "定时执行指定模板",
     "categories": [

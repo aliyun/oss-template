@@ -65,7 +65,8 @@
           "RegionId": "{{ RegionId }}",
           "InstanceId": "{{ InstanceId }}",
           "Bandwidth": "{{ Bandwidth }}",
-          "AutoPay": true
+          "AutoPay": true,
+          "NodeId": "ALL"
         }
       }
     },
@@ -94,7 +95,8 @@
           "RegionId": "{{ RegionId }}",
           "InstanceId": "{{ InstanceId }}",
           "Bandwidth": 0,
-          "AutoPay": true
+          "AutoPay": true,
+          "NodeId": "ALL"
         }
       }
     }

@@ -52,12 +52,14 @@ Parameters:
       - ACS::CEN::TransitRouterVbrAttachment
       - ACS::CEN::TransitRouterVpcAttachment
       - ACS::CEN::TransitRouterVpnAttachment
+      - ACS::CEN::TransitRouterEcrAttachment
       - ACS::DCDN::Domain
       - ACS::DdosCoo::Instance
       - ACS::EBS::DedicatedBlockStorageCluster
       - ACS::EBS::DiskReplicaGroup
       - ACS::EBS::DiskReplicaPair
       - ACS::EBS::EnterpriseSnapshotPolicy
+      - ACS::EBS::SolutionInstance
       - ACS::ECI::ContainerGroup
       - ACS::ECS::AutoSnapshotPolicy
       - ACS::ECS::Command
@@ -71,8 +73,10 @@ Parameters:
       - ACS::ECS::SecurityGroup
       - ACS::ECS::Snapshot
       - ACS::EIP::EipAddress
+      - ACS::Eipanycast::AnycastEipAddress
       - ACS::ESS::ScalingGroup
       - ACS::ExpressConnect::PhysicalConnection
+      - ACS::ExpressConnectRouter::ExpressConnectRouter
       - ACS::FC::Service
       - ACS::GPDB::DBInstance
       - ACS::Ga::Accelerator
@@ -80,8 +84,14 @@ Parameters:
       - ACS::Ga::BandwidthPackage
       - ACS::Ga::BasicAccelerator
       - ACS::Ga::EndpointGroup
+      - ACS::KMS::KEY
+      - ACS::KMS::SECRET
+      - ACS::Live::Caster
+      - ACS::Live::Domain
       - ACS::HBase::Cluster
       - ACS::MongoDB::DBInstance
+      - ACS::MSE::Gateway
+      - ACS::MSE::Cluster
       - ACS::NAS::FileSystem
       - ACS::NAT::NatGateway
       - ACS::NLB::Listener
@@ -104,6 +114,11 @@ Parameters:
       - ACS::Redis::DBInstance
       - ACS::ResourceManager::Account
       - ACS::ResourceManager::ResourceGroup
+      - ACS::ResourceManager::Folder
+      - ACS::ResourceManager::ControlPolicy
+      - ACS::RocketMQ::Instance
+      - ACS::RDS::Custom
+      - ACS::RDS::CustomDeploymentSet
       - ACS::SLB::AccessControlList
       - ACS::SLB::CACertificate
       - ACS::SLB::LoadBalancer
@@ -128,6 +143,7 @@ Parameters:
       - ACS::VPC::VSwitch
       - ACS::VPN::CustomerGateway
       - ACS::VPN::VpnGateway
+      - ACS::WAFV3::DefenseResource
       - ALIYUN::ADB::CLUSTER
       - ALIYUN::ALB::ACL
       - ALIYUN::ALB::LOADBALANCER

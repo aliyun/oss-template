@@ -20,6 +20,9 @@ Parameters:
       zh-cn: OSS bucket 名称
     Type: String
   allowEmptyReferer:
+    Label:
+      en: AllowEmptyReferer
+      zh-cn: 是否允许Referer字段为空的请求访问
     Description:
       en: Specify whether to allow access to requests whose Referer field is empty
       zh-cn: 指定是否允许Referer字段为空的请求访问

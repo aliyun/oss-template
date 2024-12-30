@@ -1,0 +1,33 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "en": "Query ENS route table ID and information",
+    "zh-cn": "查询ENS路由表ID及信息",
+    "name-en": "ACS::ENS::QueryRouteTableInfo",
+    "name-zh-cn": "查询ENS路由表ID及信息"
+  },
+  "Tasks": [
+    {
+      "Name": "getRouteTableList",
+      "Action": "ACS::ExecuteApi",
+      "Description": "查询ENS路由表列表",
+      "Properties": {
+        "Parameters": {},
+        "Service": "ens",
+        "API": "DescribeEnsRouteTables"
+      },
+      "Outputs": {
+        "RouteTableInfo": {
+          "Type": "List",
+          "ValueSelector": ".RouteTables[]"
+        }
+      }
+    }
+  ],
+  "Outputs": {
+    "routeTableInfo": {
+      "Type": "List",
+      "Value": "{{ getRouteTableList.RouteTableInfo }}"
+    }
+  }
+}

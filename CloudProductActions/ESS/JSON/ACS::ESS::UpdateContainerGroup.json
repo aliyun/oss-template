@@ -178,6 +178,40 @@
       }
     },
     {
+      "Name": "getContainerStatus",
+      "Action": "ACS::WaitFor",
+      "Description": {
+        "en": "Wait for the container to be ready",
+        "zh-cn": "等待容器状态就绪"
+      },
+      "DelayType": "Constant",
+      "Delay": 30,
+      "Retries": 60,
+      "Properties": {
+        "Service": "ECI",
+        "API": "DescribeContainerGroups",
+        "Parameters": {
+          "RegionId": "{{ regionId }}",
+          "ContainerGroupIds": [
+            "{{ instanceId }}"
+          ]
+        },
+        "DesiredValues": [
+          true
+        ],
+        "PropertySelector": ".ContainerGroups[].Containers[]|select(.Name==\"{{ACS::TaskLoopItem}}\")|.Ready"
+      },
+      "Loop": {
+        "Items": {
+          "Fn::Jq": [
+            "All",
+            ".[].Name",
+            "{{ containerConfigure }}"
+          ]
+        }
+      }
+    },
+    {
       "Name": "whetherToExitStandBy",
       "Action": "ACS::Choice",
       "Description": {

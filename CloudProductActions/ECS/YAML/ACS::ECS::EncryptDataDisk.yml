@@ -73,6 +73,12 @@ Tasks:
       deleteWithInstance:
         Type: Boolean
         ValueSelector: Disks.Disk[].DeleteWithInstance
+      performanceLevel:
+        Type: String
+        ValueSelector: Disks.Disk[].PerformanceLevel
+      chargeType:
+        Type: String
+        ValueSelector: Disks.Disk[].DiskChargeType
   - Name: whetherToEncrypt
     Action: ACS::Choice
     Description:
@@ -101,6 +107,10 @@ Tasks:
         ValueSelector: snapshotId
   - Name: createDisk
     Action: ACS::ExecuteAPI
+    When:
+      Fn::Equals:
+        - '{{ describeDisk.ChargeType }}'
+        - PostPaid
     Description:
       en: Creates a disk
       zh-cn: 创建磁盘
@@ -115,6 +125,7 @@ Tasks:
         DiskCategory: '{{ describeDisk.category }}'
         SnapshotId: '{{ createSnapshot.snapshotId }}'
         Description: '{{ describeDisk.description }}'
+        PerformanceLevel: '{{ describeDisk.performanceLevel }}'
         KMSKeyId: '{{ KMSKeyId }}'
         Encrypted: true
     Outputs:
@@ -123,6 +134,10 @@ Tasks:
         ValueSelector: DiskId
   - Name: untilNewDiskReady
     Action: ACS::WaitFor
+    When:
+      Fn::Equals:
+        - '{{ describeDisk.ChargeType }}'
+        - PostPaid
     Description:
       en: Waits for the disk to be created successfully
       zh-cn: 等待磁盘创建成功
@@ -136,6 +151,23 @@ Tasks:
       DesiredValues:
         - Available
       PropertySelector: Disks.Disk[].Status
+  - Name: modifyPrePaidDiskChargeType
+    Action: ACS::ExecuteAPI
+    When:
+      Fn::Equals:
+        - '{{ describeDisk.ChargeType }}'
+        - PrePaid
+    Description:
+      en: Modifies the disk charge type to PostPaid
+      zh-cn: 修改磁盘计费方式为按量付费
+    Properties:
+      Service: ECS
+      API: ModifyDiskChargeType
+      Parameters:
+        DiskIds:
+          - '{{ diskId }}'
+        InstanceId: '{{ describeDisk.instanceId }}'
+        DiskChargeType: PostPaid
   - Name: detachDisk
     Action: ACS::ECS::DetachDisk
     Description:
@@ -147,6 +179,10 @@ Tasks:
       instanceId: '{{ describeDisk.instanceId }}'
   - Name: attachDisk
     Action: ACS::ECS::AttachDisk
+    When:
+      Fn::Equals:
+        - '{{ describeDisk.ChargeType }}'
+        - PostPaid
     Description:
       en: Attaches the disk
       zh-cn: 绑定磁盘
@@ -155,3 +191,30 @@ Tasks:
       diskId: '{{ createDisk.diskId }}'
       instanceId: '{{ describeDisk.instanceId }}'
       deleteWithInstance: '{{ describeDisk.deleteWithInstance }}'
+  - Name: createPrePaidDisk
+    Action: ACS::ExecuteAPI
+    When:
+      Fn::Equals:
+        - '{{ describeDisk.ChargeType }}'
+        - PrePaid
+    Description:
+      en: Creates a prepaid disk
+      zh-cn: 创建包年包月磁盘
+    Properties:
+      Service: ECS
+      API: CreateDisk
+      Parameters:
+        RegionId: '{{ regionId }}'
+        Size: '{{ describeDisk.Size }}'
+        InstanceId: '{{ describeDisk.instanceId }}'
+        DiskName: '{{ describeDisk.name }}'
+        DiskCategory: '{{ describeDisk.category }}'
+        SnapshotId: '{{ createSnapshot.snapshotId }}'
+        Description: '{{ describeDisk.description }}'
+        PerformanceLevel: '{{ describeDisk.performanceLevel }}'
+        KMSKeyId: '{{ KMSKeyId }}'
+        Encrypted: true
+    Outputs:
+      diskId:
+        Type: String
+        ValueSelector: DiskId

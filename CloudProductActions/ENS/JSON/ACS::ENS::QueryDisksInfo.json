@@ -1,0 +1,33 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "en": "Query ENS disk ID and disk information",
+    "zh-cn": "查询ENS磁盘ID及磁盘信息",
+    "name-en": "ACS::ENS::QueryDisksInfo",
+    "name-zh-cn": "查询ENS磁盘ID及磁盘信息"
+  },
+  "Tasks": [
+    {
+      "Name": "getDisksList",
+      "Action": "ACS::ExecuteApi",
+      "Description": "查询ENS磁盘列表",
+      "Properties": {
+        "Parameters": {},
+        "Service": "ens",
+        "API": "DescribeDisks"
+      },
+      "Outputs": {
+        "DisksInfo": {
+          "Type": "List",
+          "ValueSelector": ".Disks.Disks[]"
+        }
+      }
+    }
+  ],
+  "Outputs": {
+    "disksInfo": {
+      "Type": "List",
+      "Value": "{{ getDisksList.DisksInfo }}"
+    }
+  }
+}

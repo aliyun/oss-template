@@ -34,6 +34,23 @@ Parameters:
       - ACS::ECS::NetworkInterface
       - ACS::EIP::EipAddress
       - ACS::ECS::Snapshot
+      - ACS::ECS::Instance
+      - ACS::OSS::Bucket
+      - ACS::Elasticsearch::Instance
+      - ACS::MongoDB::DBInstance
+      - ACS::Redis::DBInstance
+      - ACS::PolarDB::DBCluster
+      - ACS::ALB::LoadBalancer
+      - ACS::SLB::LoadBalancer
+      - ACS::RocketMQ::Instance
+      - ACS::DRDS::PolarDBXInstance
+      - ACS::ACK::Cluster
+      - ACS::RDS::DBInstance
+      - ACS::DRDS::DBInstance
+      - ACS::Bastionhost::Instance
+      - ACS::MSE::Cluster
+      - ACS::NLB::LoadBalancer
+      - ACS::VPC::VPC
 
   rateControl:
     Label:
@@ -66,20 +83,16 @@ Tasks:
         Resources:
           - ResourceId: '{{ACS::TaskLoopItem }}'
             ResourceType:
-              Fn::Select:
-                - '{{ resourceType }}'
-                - ACS::ECS::Disk: disk
-                  ACS::ECS::NetworkInterface: eni
-                  ACS::EIP::EipAddress: eip
-                  ACS::ECS::Snapshot: snapshot
+              'Fn::Jq':
+                - First
+                - '.resourceType |split("::") | ""+.[2]'
+                - '{"resourceType":"{{resourceType}}"}'
             RegionId: '{{ regionId }}'
             Service:
-              Fn::Select:
-                - '{{ resourceType }}'
-                - ACS::ECS::Disk: ecs
-                  ACS::ECS::NetworkInterface: ecs
-                  ACS::EIP::EipAddress: eip
-                  ACS::ECS::Snapshot: ecs
+              'Fn::Jq':
+                - First
+                - '.resourceType |split("::") | ""+.[1]'
+                - '{"resourceType":"{{resourceType}}"}'
     Loop:
       RateControl: '{{ rateControl }}'
       Items: '{{ resourceIds }}'

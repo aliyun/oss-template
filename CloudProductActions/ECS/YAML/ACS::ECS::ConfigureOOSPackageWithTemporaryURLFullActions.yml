@@ -6,6 +6,9 @@ Description:
   zh-cn: 在ECS实例中配置OOS自定义软件包
 Parameters:
   regionId:
+    Label:
+      en: RegionId
+      zh-cn: 地域ID
     Description:
       en: The ID of region
       zh-cn: 地域ID
@@ -13,11 +16,17 @@ Parameters:
     AssociationProperty: RegionId
     Default: '{{ ACS::RegionId }}'
   instanceId:
+    Label:
+      en: InstanceId
+      zh-cn: ECS实例ID
     Description:
       en: The ID of ECS instance
       zh-cn: ECS实例ID
     Type: String
   action:
+    Label:
+      en: Action
+      zh-cn: 设置软件包的方式
     Description:
       en: The action to configure package
       zh-cn: 设置软件包的方式
@@ -28,11 +37,17 @@ Parameters:
       - update
     Default: install
   packageName:
+    Label:
+      en: Package Name
+      zh-cn: 软件包名称
     Description:
       en: The name of package
       zh-cn: 软件包名称
     Type: String
   packageVersion:
+    Label:
+      en: Package Version
+      zh-cn: 软件包版本
     Description:
       en: The version of package
       zh-cn: 软件包版本

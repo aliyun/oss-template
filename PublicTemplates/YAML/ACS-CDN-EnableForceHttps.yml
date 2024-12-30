@@ -1,0 +1,28 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: Turn on the HTTP-HTTPS force redirect configuration of CDN
+  zh-cn: 开启CDN的HTTP-HTTPS强制跳转配置
+  name-en: ACS-CDN-EnableForceHttps
+  name-zh-cn: 开启CDN的HTTP-HTTPS强制跳转配置
+  categories:
+    - security
+Parameters:
+  domainNames:
+    Label:
+      en: DomainNames
+      zh-cn: 域名
+    Type: String
+Tasks:
+  - Action: ACS::ExecuteApi
+    Name: ExecuteApi
+    Description:
+      en: Enable CDN-domain HTTP-HTTPS force redirect configuration
+      zh-cn: 打开HTTP-HTTPS强制跳转配置
+    Properties:
+      Parameters:
+        DomainNames: '{{domainNames}}'
+        Functions: '[{"functionArgs":[{"argName":"enable","argValue":"on"}],"functionName":"https_force"}]'
+      Service: cdn
+      API: BatchSetCdnDomainConfig
+    Outputs: {}
+Outputs: {}

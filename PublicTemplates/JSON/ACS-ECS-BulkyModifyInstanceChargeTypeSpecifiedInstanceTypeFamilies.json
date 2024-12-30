@@ -11,6 +11,10 @@
   },
   "Parameters": {
     "regionId": {
+      "Label": {
+        "en": "RegionId",
+        "zh-cn": "地域ID"
+      },
       "Type": "String",
       "Description": {
         "en": "The id of region.",
@@ -20,6 +24,10 @@
       "Default": "{{ ACS::RegionId }}"
     },
     "targets": {
+      "Label": {
+        "en": "TargetInstance",
+        "zh-cn": "目标实例"
+      },
       "Type": "Json",
       "AssociationProperty": "Targets",
       "AssociationPropertyMetadata": {
@@ -28,6 +36,10 @@
       }
     },
     "instanceChargeType": {
+      "Label": {
+        "en": "The Instance ChargeType",
+        "zh-cn": "实例计费方式"
+      },
       "Description": {
         "en": "The instance ChargeType.",
         "zh-cn": "实例需要修改的目标计费方式。"
@@ -40,6 +52,10 @@
       "Default": "PostPaid"
     },
     "networkChargeType": {
+      "Label": {
+        "en": "The Network ChargeType",
+        "zh-cn": "网络计费方式"
+      },
       "Description": {
         "en": "The network ChargeType.",
         "zh-cn": "网络需要修改的目标计费方式。"
@@ -52,6 +68,10 @@
       "Default": "PayByTraffic"
     },
     "instanceTypeFamilies": {
+      "Label": {
+        "en": "The Instance Type Family",
+        "zh-cn": "实例规格族"
+      },
       "Description": {
         "en": "The instance type family of the ECS instance whose payment method is to be modified",
         "zh-cn": "要修改付费方式的ECS实例对应的实例规格族"
@@ -59,6 +79,10 @@
       "Type": "List"
     },
     "rateControl": {
+      "Label": {
+        "en": "RateControl",
+        "zh-cn": "任务执行的并发比率"
+      },
       "Description": {
         "en": "Concurrency ratio of task execution.",
         "zh-cn": "任务执行的并发比率。"
@@ -72,6 +96,10 @@
       }
     },
     "OOSAssumeRole": {
+      "Label": {
+        "en": "OOSAssumeRole",
+        "zh-cn": "OOS扮演的RAM角色"
+      },
       "Description": {
         "en": "The RAM role to be assumed by OOS.",
         "zh-cn": "OOS扮演的RAM角色。"

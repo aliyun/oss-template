@@ -2,16 +2,9 @@ FormatVersion: OOS-2019-06-01
 Description:
   name-en: ACS::CICD::SoftwarePackageDeploy
   name-zh-cn: 部署软件包
-  en: Deploy software package on Multiple ECS Instances (only support linux machine)
-  zh-cn: 在多个ECS实例上部署软件包 （仅支持在linux机器部署）
+  en: Deploy software package on Multiple Linux ECS Instances
+  zh-cn: 在多个Linux ECS实例上部署软件包
 Parameters:
-  regionId:
-    Label:
-      en: region
-      zh-cn: 地域
-    Type: String
-    Default: '{{ ACS::RegionId }}'
-    AssociationProperty: RegionId
   targets:
     Type: Json
     Label:
@@ -20,7 +13,7 @@ Parameters:
     AssociationProperty: Targets
     AssociationPropertyMetadata:
       ResourceType: 'ALIYUN::ECS::Instance'
-      RegionId: regionId
+      RegionId: '{{ ACS::RegionId }}'
   bucketName:
     Label:
       en: BucketName
@@ -28,7 +21,7 @@ Parameters:
     Type: String
     AssociationProperty: ALIYUN::OSS::Bucket::BucketName
     AssociationPropertyMetadata:
-      RegionId: regionId
+      RegionId: '{{ ACS::RegionId }}'
   objectName:
     Label:
       en: ObjectName
@@ -36,18 +29,9 @@ Parameters:
     Type: String
     AssociationProperty: ALIYUN::OSS::Object::ObjectName
     AssociationPropertyMetadata:
-      RegionId: regionId
+      RegionId: '{{ ACS::RegionId }}'
       BucketName: bucketName
       ValueType: bucketName
-  isInternal:
-    Label:
-      en: Whether to generate an internal url
-      zh-cn: 是否生成内网URL
-    Description:
-      en: False generates an public url, True generates an internal url. If the ECS and OSS are in the same region, you can choose True to download via the internal URL, which saves traffic fees.
-      zh-cn: False生成公网URL，True生成内网URL。如果您要下载到的ECS和OSS同地域，可选择True，通过内网URL下载，节省流量。
-    Type: Boolean
-    Default: true
   downloadPath:
     Label:
       en: DownloadPath
@@ -69,12 +53,9 @@ Parameters:
     AssociationPropertyMetadata:
       CommandType: RunShellScript
     Default: |-
-      # 部署脚本会在部署组的每台机器上执行。一个典型脚本逻辑如下：先将制品包（在下载路径中配置的下载路径）解压缩到指定目录中，再执行启动脚本（通常在代码中维护，如示例中deploy.sh）。
-      # 关于这个例子的详细解释见 https://help.aliyun.com/document_detail/153848.html
-      # tar zxvf /home/admin/app/package.tgz -C /home/admin/app/
-      # sh /home/admin/app/deploy.sh restart
-      # 如果你是php之类的无需制品包的制品方式，可以使用git clone 或者 git pull将源代码更新到服务器，再执行其他命令
-      # git clone ***@***.git
+      # sample deploy script
+      # tar zxvf /home/admin/app/buildMaterial-{{ACS::ExecutionId}}.tgz -C /home/admin/app/
+      # java -jar sample-spring-1.0-SNAPSHOT.jar --service.port=8080 &
   rateControl:
     Label:
       en: RateControl
@@ -93,7 +74,7 @@ Tasks:
     Action: 'ACS::SelectTargets'
     Properties:
       ResourceType: 'ALIYUN::ECS::Instance'
-      RegionId: '{{ regionId }}'
+      RegionId: '{{ ACS::RegionId }}'
       Filters:
         - '{{ targets }}'
     Outputs:
@@ -106,11 +87,11 @@ Tasks:
       zh-cn: 在多个ECS实例上部署
     Action: 'ACS::CICD::SoftwarePackageDeployOnSingleEcs'
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId: '{{ ACS::TaskLoopItem }}'
       bucketName: '{{ bucketName }}'
       objectName: '{{ objectName }}'
-      isInternal: '{{ isInternal }}'
+      isInternal: true
       downloadPath: '{{ downloadPath }}'
       deployScript: '{{ deployScript }}'
     Loop:
@@ -120,12 +101,6 @@ Metadata:
   ALIYUN::OOS::Interface:
     ParameterGroups:
       - Parameters:
-          - regionId
-        Label:
-          default:
-            zh-cn: 地域信息
-            en: Region
-      - Parameters:
           - targets
         Label:
           default:
@@ -134,7 +109,6 @@ Metadata:
       - Parameters:
           - bucketName
           - objectName
-          - isInternal
           - downloadPath
         Label:
           default:

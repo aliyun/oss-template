@@ -1,0 +1,80 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "name-en": "ACS-ENS-BulkyQueryInstanceSliceInfo",
+    "name-zh-cn": "批量查询ENS实例信息（按列名拆分）",
+    "en": "Bulky query ENS instance info sliced by column name",
+    "zh-cn": "批量查询ENS实例信息（按列名拆分）"
+  },
+  "Parameters": {
+    "columnNames": {
+      "Label": {
+        "en": "ColumnNames",
+        "zh-cn": "列名列表"
+      },
+      "Type": "List",
+      "Default": []
+    },
+    "rateControl": {
+      "Label": {
+        "en": "RateControl",
+        "zh-cn": "任务执行的并发比率"
+      },
+      "Type": "Json",
+      "AssociationProperty": "RateControl",
+      "Default": {
+        "Mode": "Concurrency",
+        "MaxErrors": 0,
+        "Concurrency": 10
+      }
+    },
+    "OOSAssumeRole": {
+      "Label": {
+        "en": "OOSAssumeRole",
+        "zh-cn": "OOS扮演的RAM角色"
+      },
+      "Type": "String",
+      "Default": ""
+    }
+  },
+  "RamRole": "{{ OOSAssumeRole }}",
+  "Tasks": [
+    {
+      "Name": "getInstance",
+      "When": {
+        "Fn::Equals": [
+          "{{columnNames}}",
+          []
+        ]
+      },
+      "Description": {
+        "en": "Get all ENS instances at once",
+        "zh-cn": "一次性获取ENS实例全部属性"
+      },
+      "Action": "ACS::ENS::QueryInstanceInfo"
+    },
+    {
+      "Name": "getInstanceSlice",
+      "When": {
+        "Fn::Not": {
+          "Fn::Equals": [
+            "{{columnNames}}",
+            []
+          ]
+        }
+      },
+      "Description": {
+        "en": "Get specify attributes of ENS instances",
+        "zh-cn": "获取ENS实例指定属性"
+      },
+      "Action": "ACS::ENS::QueryInstanceSliceInfo",
+      "Properties": {
+        "columnName": "{{ ACS::TaskLoopItem }}"
+      },
+      "Loop": {
+        "Items": "{{ columnNames }}",
+        "RateControl": "{{ rateControl }}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "en": "Query ENS vswitch ID and vswitch information",
+    "zh-cn": "查询ENS交换机ID及交换机信息",
+    "name-en": "ACS::ENS::QueryVSwitchInfo",
+    "name-zh-cn": "查询ENS交换机ID及交换机信息"
+  },
+  "Tasks": [
+    {
+      "Name": "getVSwitchList",
+      "Action": "ACS::ExecuteApi",
+      "Description": "查询ENS交换机列表",
+      "Properties": {
+        "Parameters": {},
+        "Service": "ens",
+        "API": "DescribeVSwitches"
+      },
+      "Outputs": {
+        "VSwitchInfo": {
+          "Type": "List",
+          "ValueSelector": ".VSwitches.VSwitch[]"
+        }
+      }
+    }
+  ],
+  "Outputs": {
+    "vSwitchInfo": {
+      "Type": "List",
+      "Value": "{{ getVSwitchList.VSwitchInfo }}"
+    }
+  }
+}

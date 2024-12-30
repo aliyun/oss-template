@@ -5,13 +5,6 @@ Description:
   en: Build Docker Image and Upload to ACR (Only support linux machine)
   zh-cn: 构建Docker镜像并上传至阿里云镜像仓库 （仅支持在linux机器构建)
 Parameters:
-  regionId:
-    Label:
-      en: region
-      zh-cn: 地域
-    Type: String
-    Default: '{{ ACS::RegionId }}'
-    AssociationProperty: RegionId
   codeSource:
     Label:
       en: CodeResource
@@ -27,21 +20,6 @@ Parameters:
     Type: String
     AssociationPropertyMetadata:
       PropertyType: ref
-  branch:
-    Label:
-      en: Branch
-      zh-cn: 分支
-    Description:
-      en: Branch, pull default branch if not set
-      zh-cn: 代码仓库分支，不填拉取默认分支
-    Type: String
-    Default: ''
-    AssociationPropertyMetadata:
-      Visible:
-        Condition:
-          Fn::Equals:
-            - ${codeSource}
-            - 'git'
   buildType:
     Label:
       en: Build Type
@@ -63,7 +41,7 @@ Parameters:
     Default: ''
     AssociationProperty: ALIYUN::ECS::Instance::InstanceId
     AssociationPropertyMetadata:
-      RegionId: regionId
+      RegionId: '{{ ACS::RegionId }}'
       Visible:
         Condition:
           Fn::Equals:
@@ -208,11 +186,15 @@ Parameters:
   acrType:
     Label:
       en: ACR Type
-      zh-cn: 容器镜像类型
+      zh-cn: 容器镜像服务类型
+    Description:
+      en: If you do not have a container image service, You can choose to open <a href="https://www.alibabacloud.com/help/en/acr/user-guide/create-a-container-registry-personal-edition-instance" target="_blank"> Personal edition </a> or <a href="https://www.alibabacloud.com/help/en/acr/user-guide/create-a-container-registry-enterprise-edition-instance" target="_blank"> Enterprise Edition </a>.
+      zh-cn: 如您还没有容器镜像服务，您可以选择开通<a href="https://help.aliyun.com/zh/acr/user-guide/create-a-container-registry-personal-edition-instance?spm=a2c4g.11186623.0.i7" target="_blank">个人版</a>或<a href="https://help.aliyun.com/zh/acr/user-guide/create-a-container-registry-enterprise-edition-instance?spm=a2c4g.11186623.0.i10" target="_blank">企业版</a>。
     Type: String
+    Default: Personal
     AllowedValues:
-      - Enterprise
       - Personal
+      - Enterprise
     AssociationPropertyMetadata:
       ValueLabelMapping:
         Enterprise: 企业版
@@ -312,7 +294,7 @@ Parameters:
     AssociationProperty: ALIYUN::CR::Repository::RepoName
     AssociationPropertyMetadata:
       AcrType: ${acrType}
-      RegionId: ${regionId}
+      RegionId: '{{ ACS::RegionId }}'
       InstanceId: ${acrId}
       RepoNamespaceName: ${namespace}
       RepoStatus: ALL
@@ -321,10 +303,10 @@ Parameters:
       en: whether to use internal link to push image
       zh-cn: 是否通过内网链接上传镜像
     Description:
-      en: False generates an public url, True generates an internal url. If you want to use internal link to push image, please ensure that your image repository and ECS instance are in the same VPC (personal acr, accessible to all VPC machines, no separate configuration required), please refer to <a href="https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr" target="_blank">acr configuration access VPC</a>.
-      zh-cn: False生成公网URL，True生成内网URL。如果您想要使用内网链接上传镜像，请确保您的镜像仓库和ECS实例在同一个VPC内(个人版acr，VPC机器均可访问，无需单独配置)，具体请参考<a href="https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr" target="_blank">acr配置访问VPC</a>。
+      en: If you want to use internal link to push image, please ensure that your image repository and ECS instance are in the same VPC (personal acr, accessible to all VPC machines, no separate configuration required), please refer to <a href="https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr" target="_blank">acr configuration access VPC</a>.
+      zh-cn: 如果您想要使用内网链接上传镜像，请确保您的镜像仓库和ECS实例在同一个VPC内(个人版acr，VPC机器均可访问，无需单独配置)，具体请参考<a href="https://help.aliyun.com/zh/acr/user-guide/configure-access-over-vpcs/?spm=a2c4g.11186623.0.0.3af016be83KUhr" target="_blank">acr配置访问VPC</a>。
     Type: Boolean
-    Default: true
+    Default: false
 Tasks:
   - Name: createTemporaryEcs
     When:
@@ -337,7 +319,7 @@ Tasks:
       en: Create temporary ECS
       zh-cn: 创建临时ecs
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       stackName:
         Fn::Replace:
           - .: _
@@ -547,7 +529,7 @@ Tasks:
       en: Download code from OSS
       zh-cn: 从OSS下载代码
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId:
         Fn::If:
           - Fn::Equals:
@@ -569,7 +551,7 @@ Tasks:
       en: Download code from git
       zh-cn: 从git下载代码
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId:
         Fn::If:
           - Fn::Equals:
@@ -614,11 +596,7 @@ Tasks:
         echo "Git installation script has completed."
         mkdir -p /root/workspace/{{ACS::ExecutionId}}
         cd /root/workspace/{{ACS::ExecutionId}}
-        if [ -n "{{ branch }}" ]; then
-          git clone --branch {{ branch }} {{ codeSourceUrl }} .
-        else
-          git clone {{ codeSourceUrl }} .
-        fi
+        git clone {{ codeSourceUrl }} .
   - Name: installDocker
     OnError: deleteTemporaryEcs
     Description:
@@ -626,7 +604,7 @@ Tasks:
       zh-cn: 安装环境
     Action: ACS::ECS::ConfigureOOSPackageWithTemporaryURL
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId:
         Fn::If:
           - Fn::Equals:
@@ -644,7 +622,7 @@ Tasks:
     Action: ACS::ECS::RunCommand
     Properties:
       workingDir: /root/workspace/{{ACS::ExecutionId}}
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId:
         Fn::If:
           - Fn::Equals:
@@ -654,7 +632,7 @@ Tasks:
           - '{{ instanceId }}'
       commandType: RunShellScript
       commandContent: |-
-        region="{{regionId}}"
+        region="{{ ACS::RegionId }}"
         
         if [ -f /etc/docker/daemon.json ]; then
           echo "daemon.json already exists, skip"
@@ -690,7 +668,7 @@ Tasks:
       zh-cn: 执行构建命令
     Properties:
       workingDir: /root/workspace/{{ACS::ExecutionId}}
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId:
         Fn::If:
           - Fn::Equals:
@@ -749,7 +727,7 @@ Tasks:
       en: Login to enterprise ACR and push image
       zh-cn: 登录到企业版acr并推送镜像
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId:
         Fn::If:
           - Fn::Equals:
@@ -763,11 +741,11 @@ Tasks:
         Fn::Sub:
           - |-
               if [ {{ isInternal }} == true ]; then
-                repo={{getAcrName.acrName}}-registry-vpc.{{regionId}}.cr.aliyuncs.com
-                current_image_version={{getAcrName.acrName}}-registry-vpc.{{regionId}}.cr.aliyuncs.com/{{namespace}}/{{repoName}}:{{imageVersion}}
+                repo={{getAcrName.acrName}}-registry-vpc.{{ACS::RegionId}}.cr.aliyuncs.com
+                current_image_version={{getAcrName.acrName}}-registry-vpc.{{ACS::RegionId}}.cr.aliyuncs.com/{{namespace}}/{{repoName}}:{{imageVersion}}
               else
-                repo={{getAcrName.acrName}}-registry.{{regionId}}.cr.aliyuncs.com
-                current_image_version={{getAcrName.acrName}}-registry.{{regionId}}.cr.aliyuncs.com/{{namespace}}/{{repoName}}:{{imageVersion}}
+                repo={{getAcrName.acrName}}-registry.{{ACS::RegionId}}.cr.aliyuncs.com
+                current_image_version={{getAcrName.acrName}}-registry.{{ACS::RegionId}}.cr.aliyuncs.com/{{namespace}}/{{repoName}}:{{imageVersion}}
               fi
               docker build -f {{dockerFilePath}} -t $current_image_version ${FinalContextPath}
               docker login --username={{ generateAuthorizationToken.tempUsername }} --password={{ generateAuthorizationToken.authorizationToken }} $repo
@@ -802,7 +780,7 @@ Tasks:
       en: Login to Personal ACR and push image
       zh-cn: 登录到个人版acr并推送镜像
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       instanceId:
         Fn::If:
           - Fn::Equals:
@@ -816,12 +794,12 @@ Tasks:
         Fn::Sub:
           - |-
             if [ {{ isInternal }} == true ]; then
-              repo=registry-vpc.{{regionId}}.aliyuncs.com
+              repo=registry-vpc.{{ACS::RegionId}}.aliyuncs.com
               original_repo_name="{{repoName}}"
               modified_repo_name=$(echo "$original_repo_name" | sed 's/registry\(.*\)\./registry-vpc\1./')
               current_image_version=$modified_repo_name:{{imageVersion}}
             else
-              repo=registry.{{regionId}}.aliyuncs.com
+              repo=registry.{{ACS::RegionId}}.aliyuncs.com
               current_image_version={{repoName}}:{{imageVersion}}
             fi
             docker build -f {{dockerFilePath}} -t $current_image_version ${FinalContextPath}
@@ -856,7 +834,7 @@ Tasks:
       en: Delete temporary ECS and grant acr permission
       zh-cn: 删除临时ecs并授予acr权限
     Properties:
-      regionId: '{{ regionId }}'
+      regionId: '{{ ACS::RegionId }}'
       stackId: '{{ createTemporaryEcs.stackId }}'
       retainAllResources: false
 Outputs:
@@ -882,15 +860,8 @@ Metadata:
   ALIYUN::OOS::Interface:
     ParameterGroups:
       - Parameters:
-          - regionId
-        Label:
-          default:
-            zh-cn: 地域信息
-            en: Region
-      - Parameters:
           - codeSource
           - codeSourceUrl
-          - branch
         SubTitle: 代码源链接一般来自代码源步骤的输出
         Label:
           default:

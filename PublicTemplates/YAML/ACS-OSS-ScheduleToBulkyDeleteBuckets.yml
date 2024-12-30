@@ -1,0 +1,126 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: Schedule to cleanup of buckets in a specified resource group
+  zh-cn: 定时删除指定资源组中的bucket
+  name-en: ACS-OSS-ScheduleToBulkyDeleteBuckets
+  name-zh-cn: 定时删除指定资源组中的bucket
+  categories:
+    - time_trigger
+Parameters:
+  regionId:
+    Type: String
+    Label:
+      en: The id of region
+      zh-cn: 地域ID
+    AssociationProperty: RegionId
+    Default: '{{ ACS::RegionId }}'
+  timerTrigger:
+    Type: Json
+    Label:
+      en: TimerTrigger
+      zh-cn: 定时类型
+    AssociationProperty: ALIYUN::OOS::Component::TimerTrigger
+    AssociationPropertyMetadata:
+      MinuteInterval: 30
+  resourceGroupId:
+    Type: String
+    Label:
+      en: ResourceGroupId
+      zh-cn: 资源组ID
+  rateControl:
+    Label:
+      en: RateControl
+      zh-cn: 任务执行的并发比率
+    Type: Json
+    AssociationProperty: RateControl
+    Default:
+      Mode: Concurrency
+      MaxErrors: 0
+      Concurrency: 10
+  OOSAssumeRole:
+    Label:
+      en: OOSAssumeRole
+      zh-cn: OOS扮演的RAM角色
+    Type: String
+    Default: ''
+RamRole: '{{ OOSAssumeRole }}'
+Tasks:
+  - Name: timerTrigger
+    Action: ACS::TimerTrigger
+    Description:
+      en: Triggers a task as scheduled by specifying type and expression
+      zh-cn: 通过指定触发类型和表达式按计划触发任务
+    Properties:
+      Type:
+        'Fn::Select':
+          - type
+          - '{{timerTrigger}}'
+      Expression:
+        'Fn::Select':
+          - expression
+          - '{{timerTrigger}}'
+      EndDate:
+        'Fn::Select':
+          - endDate
+          - '{{ timerTrigger }}'
+      TimeZone:
+        'Fn::Select':
+          - timeZone
+          - '{{ timerTrigger }}'
+  - Name: getBuckets
+    Description:
+      en: Gets OSS buckets
+      zh-cn: 获取OSS bucket
+    Action: ACS::ExecuteAPI
+    Properties:
+      Service: OSS
+      API: ListBuckets
+      Method: GET
+      URI: '/'
+      Headers:
+        x-oss-resource-group-id: '{{resourceGroupId}}'
+      Body: ''
+    Outputs:
+      bucketNames:
+        Type: List
+        ValueSelector: '.ListAllMyBucketsResult.Buckets.Bucket[] | {"Name": .Name, RegionId: .Region} '
+  - Name: deleteBucket
+    Action: ACS::OSS::DeleteBucket
+    Description:
+      en: Delete bucket
+      zh-cn: 删除 bucket
+    Properties:
+      regionId:
+        Fn::Select:
+          - RegionId
+          - '{{ ACS::TaskLoopItem }}'
+      bucketName:
+        Fn::Select:
+          - Name
+          - '{{ ACS::TaskLoopItem }}'
+    Loop:
+      Items: '{{ getBuckets.bucketNames }}'
+      RateControl: '{{ rateControl }}'
+Metadata:
+  ALIYUN::OOS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - timerTrigger
+        Label:
+          default:
+            zh-cn: 定时设置
+            en: Timer Trigger Configure
+      - Parameters:
+          - regionId
+          - resourceGroupId
+        Label:
+          default:
+            zh-cn: 选择资源组
+            en: Select Resource Group
+      - Parameters:
+          - rateControl
+          - OOSAssumeRole
+        Label:
+          default:
+            zh-cn: 高级选项
+            en: Control Options

@@ -27,6 +27,10 @@
       "Type": "List"
     },
     "preferredBackupTime": {
+      "Label": {
+        "en": "Preferred Backup Time",
+        "zh-cn": "执行备份时间"
+      },
       "Description": {
         "en": "Backup Time",
         "zh-cn": "执行备份的时间，格式为HH:mmZ-HH:mmZ（UTC时间）。时间范围限制为1小时。"
@@ -35,6 +39,10 @@
       "Default": "18:00Z-19:00Z"
     },
     "preferredBackupPeriod": {
+      "Label": {
+        "en": "Preferred Backup Period",
+        "zh-cn": "备份周期"
+      },
       "Description": {
         "en": "Backup Period",
         "zh-cn": "备份周期"
@@ -51,6 +59,10 @@
       ]
     },
     "enableBackupLog": {
+      "Label": {
+        "en": "Enable Backup Log",
+        "zh-cn": "开启或关闭数据闪回功能"
+      },
       "Description": {
         "en": "Enable backup log",
         "zh-cn": "开启或关闭数据闪回功能，取值： 1：开启。同时，您还需确保已在实例的参数设置中开启AOF持久化（appendonly为yes），开启后，才能使用数据闪回功能。0：关闭，默认值。"

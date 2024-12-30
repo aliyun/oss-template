@@ -1,7 +1,7 @@
 FormatVersion: OOS-2019-06-01
 Description:
-  en: Bulky upload files to instances
-  zh-cn: 批量上传文件到多个ECS实例
+  en: 'Bulky upload files to multiple Alibaba Cloud ECS instances, applicable to scenarios that require distributing files across multiple instances, such as application deployment and data synchronization. During configuration, users need to provide the following required parameter information: Region ID (regionId), which specifies the region of the target ECS instances where the files will be uploaded, Target Instances (targets), which defines the specific ECS instances to be operated on, Source Type (sourceType), which specifies the source method of the file (e.g., local, OSS, or HTTPS), and Source Path (sourcePath), which is the exact location of the file. Upon execution, the template provides the results of the file upload operation, enabling users to verify the status of the file uploads.'
+  zh-cn: 批量上传文件到多个阿里云ECS实例，适用于需要在多台实例间分发文件的场景，例如应用部署、数据同步等。在配置过程中，用户需要提供以下必填参数信息，地域ID（regionId）：用于指定需要上传文件的目标ECS实例所在的区域，目标实例（targets）：用于定义具体需要操作的ECS实例，文件类型（sourceType）：用于指定文件的来源方式（如本地、OSS或HTTPS），以及文件路径（sourcePath）：具体的文件位置。模板在执行后会返回文件上传操作的结果信息，方便用户验证文件上传的状态。
   name-en: Upload File
   name-zh-cn: 上传文件
   categories:
@@ -60,8 +60,8 @@ Parameters:
       en: DestinationDir
       zh-cn: 文件保存路径
     Description:
-      en: The full path of destination directory
-      zh-cn: 文件在目标机器的完整路径
+      en: < Li class = "Li" > The complete path of the file on the target machine. example：linux：/root, windows：E://.</ li>
+      zh-cn: <li class="li">文件在目标机器的完整路径。例：linux：/root, windows：E://。</li>
     Type: String
     Default: /root
   timeout:

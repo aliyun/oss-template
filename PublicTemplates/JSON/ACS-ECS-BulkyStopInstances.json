@@ -1,8 +1,8 @@
 {
   "FormatVersion": "OOS-2019-06-01",
   "Description": {
-    "en": "Bulky stops the ECS instances",
-    "zh-cn": "批量停止ECS实例",
+    "en": "Bulky stops the ECS instances, applicable to scenarios that require managing and stopping multiple ECS instances simultaneously, such as resource optimization and cost management. During configuration, users need to provide the following required parameter information: Region ID (regionId), which specifies the region of the ECS instances to be stopped, and Target Instances (targets), which defines the specific ECS instances to be operated on. Upon execution, the template will return a list of the stopped instance IDs, enabling users to verify the status of the instance stop operations.",
+    "zh-cn": "批量停止ECS实例，适用于需要同时管理和停止多台ECS实例的场景，例如优化资源使用和成本管理。在配置过程中，用户需要提供以下必填参数信息，地域ID（regionId）：用于指定需要停止实例的地域，目标实例（targets）：用于定义具体需要操作的ECS实例。模板在执行后会返回所有停止的实例ID列表，方便用户验证实例停止的状态。",
     "name-en": "Bulky Stop Instances",
     "name-zh-cn": "批量停止实例",
     "categories": [

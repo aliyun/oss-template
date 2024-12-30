@@ -27,8 +27,27 @@
       "Type": "String",
       "AssociationProperty": "ALIYUN::ECS::Image::ImageId",
       "AssociationPropertyMetadata": {
-        "RegionId": "regionId"
+        "RegionId": "regionId",
+        "SupportedImageOwnerAlias": [
+          "self"
+        ]
       }
+    },
+    "targetImageName": {
+      "Label": {
+        "en": "Target image name",
+        "zh-cn": "目标镜像名"
+      },
+      "Type": "String",
+      "Default": ""
+    },
+    "targetImageDescription": {
+      "Label": {
+        "en": "Target image describe",
+        "zh-cn": "镜像描述"
+      },
+      "Type": "String",
+      "Default": ""
     },
     "targetRegionIds": {
       "Label": {
@@ -38,36 +57,36 @@
       "Type": "List",
       "AllowedValues": [
         "all-regions",
+        "cn-hangzhou",
+        "cn-shanghai",
+        "cn-nanjing",
         "cn-qingdao",
         "cn-beijing",
         "cn-zhangjiakou",
         "cn-huhehaote",
-        "cn-hangzhou",
-        "cn-shanghai",
-        "cn-shenzhen",
-        "cn-chengdu",
-        "cn-hongkong",
-        "cn-heyuan",
         "cn-wulanchabu",
+        "cn-shenzhen",
+        "cn-heyuan",
+        "cn-guangzhou",
+        "cn-chengdu",
+        "cn-wuhan-lr",
+        "cn-fuzhou",
+        "cn-hongkong",
         "ap-northeast-1",
+        "ap-northeast-2",
         "ap-southeast-1",
         "ap-southeast-2",
         "ap-southeast-3",
         "ap-southeast-5",
-        "ap-south-1",
-        "us-east-1",
-        "us-west-1",
-        "eu-west-1",
-        "me-east-1",
-        "eu-central-1",
-        "cn-guangzhou",
         "ap-southeast-6",
-        "cn-fuzhou",
-        "ap-northeast-2",
         "ap-southeast-7",
-        "me-central-1",
-        "cn-nanjing",
-        "cn-wuhan-lr"
+        "ap-south-1",
+        "eu-central-1",
+        "eu-west-1",
+        "us-west-1",
+        "us-east-1",
+        "me-east-1",
+        "me-central-1"
       ],
       "Default": [
         "all-regions"
@@ -156,7 +175,9 @@
       "Properties": {
         "regionId": "{{ regionId }}",
         "imageId": "{{ imageId }}",
-        "targetRegionId": "{{ ACS::TaskLoopItem }}"
+        "targetRegionId": "{{ ACS::TaskLoopItem }}",
+        "targetImageName": "{{ targetImageName }}",
+        "targetImageDescription": "{{ targetImageDescription }}"
       },
       "Loop": {
         "Items": "{{ targetRegionIds }}",
@@ -185,7 +206,9 @@
       "Properties": {
         "regionId": "{{ regionId }}",
         "imageId": "{{ imageId }}",
-        "targetRegionId": "{{ ACS::TaskLoopItem }}"
+        "targetRegionId": "{{ ACS::TaskLoopItem }}",
+        "targetImageName": "{{ targetImageName }}",
+        "targetImageDescription": "{{ targetImageDescription }}"
       },
       "Loop": {
         "Items": "{{ queryAllAvailableRegions.regionIds }}",
@@ -229,7 +252,9 @@
           "Parameters": [
             "regionId",
             "imageId",
-            "targetRegionIds"
+            "targetRegionIds",
+            "targetImageName",
+            "targetImageDescription"
           ],
           "Label": {
             "default": {

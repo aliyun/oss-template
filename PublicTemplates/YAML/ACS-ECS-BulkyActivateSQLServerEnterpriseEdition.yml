@@ -1,0 +1,251 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: SQL Server Enterprise Edition template activation
+  zh-cn: SQL企业版服务模板激活
+  name-en: ACS-ECS-BulkyActivateSQLServerEnterpriseEdition
+  name-zh-cn: SQL服务模板激活
+  categories:
+    - run_command
+    - application_manage
+Parameters:
+  regionId:
+    Type: String
+    Label:
+      en: RegionId
+      zh-cn: 地域ID
+    AssociationProperty: RegionId
+    Default: '{{ ACS::RegionId }}'
+  targets:
+    Type: Json
+    Label:
+      en: TargetInstance
+      zh-cn: 目标实例
+    AssociationProperty: Targets
+    AssociationPropertyMetadata:
+      ResourceType: 'ALIYUN::ECS::Instance'
+      RegionId: regionId
+  rateControl:
+    Label:
+      en: RateControl
+      zh-cn: 任务执行的并发比率
+    Type: Json
+    AssociationProperty: RateControl
+    Default:
+      Mode: Concurrency
+      MaxErrors: 0
+      Concurrency: 10
+  OOSAssumeRole:
+    Label:
+      en: OOSAssumeRole
+      zh-cn: OOS扮演的RAM角色
+    Type: String
+    Default: ''
+RamRole: '{{ OOSAssumeRole }}'
+Tasks:
+  - Name: getInstance
+    Description:
+      en: Views the ECS instances
+      zh-cn: 获取ECS实例
+    Action: ACS::SelectTargets
+    Properties:
+      ResourceType: ALIYUN::ECS::Instance
+      RegionId: '{{ regionId }}'
+      Filters:
+        - '{{ targets }}'
+    Outputs:
+      instanceIds:
+        Type: List
+        ValueSelector: Instances.Instance[].InstanceId
+  - Name: tagInstance
+    Action: ACS::ExecuteApi
+    Description:
+      en: Creates and attaches tag to ECS instance
+      zh-cn: 创建并挂载标签到ECS实例
+    Properties:
+      Service: ECS
+      API: TagResources
+      Parameters:
+        RegionId: '{{ regionId }}'
+        ResourceIds:
+          - '{{ ACS::TaskLoopItem }}'
+        ResourceType: Instance
+        Tags:
+          - Key: activation-execution-id
+            Value: '{{ ACS::ExecutionId }}'
+    Loop:
+      RateControl: '{{ rateControl }}'
+      Items: '{{ getInstance.instanceIds }}'
+  - Name: runCommand
+    Action: ACS::ECS::ActivateSoftware
+    Description:
+      en: Execute cloud assistant command
+      zh-cn: 执行云助手命令
+    Properties:
+      regionId: '{{ regionId }}'
+      commandContent: |-
+        <#
+
+        .Synopsis
+            change_sql_license.ps1
+        	This script change the SQL Server License.
+        	Only supports SQL Server 2012 and later versions.
+        
+        .DESCRIPTION
+        	Date:     	24/01/02
+        	Author:   	fangming.wfm@alibaba-inc.com
+        
+        .PARAMETER path
+            The path to the SQL Server setup executable.
+        .PARAMETER InstanceName
+            The name of the SQL Server instance to be updated.
+        .PARAMETER Version
+            The version of SQL Server for which the license is to be changed. Supported values are: '2012_ent', '2016_ent', '2017_ent', '2019_ent'.
+        .PARAMETER Password
+            The password used to decrypt the encrypted License key.
+        .EXAMPLE
+             C:\change_sql_license.ps1 -path "C:\Program Files\Microsoft SQL Server\140\Setup Bootstrap\SQL2017\Setup.exe" -InstanceName "MSSQLSERVER" -Version "2017_ent" -Password "***"
+        	 C:\change_sql_license.ps1 -path "C:\Program Files\Microsoft SQL Server\110\Setup Bootstrap\SQLServer2012\Setup.exe" -InstanceName "MSSQLSERVER" -Version "2012_ent" -Password "***"
+        
+        #>
+        
+        param(
+            [Parameter(Mandatory=$true)]
+            [string]$path,
+            
+            [Parameter(Mandatory=$true)]
+            [string]$InstanceName,
+            
+            [Parameter(Mandatory=$true)]
+            [ValidateSet("2012_ent", "2016_ent","2017_ent","2019_ent")]
+            [string]$Version,
+            
+            [Parameter(Mandatory=$true)]
+            [string]$Password
+        )
+        
+        # Log File
+        $name = $MyInvocation.MyCommand.Name  # ScriptName
+        $global:LogFile = New-Item -ItemType file "C:\logs\$name.log" -Force
+        
+        # Output to the screen and to the logfile
+        Function Write-Log($txt) {
+            Add-Content $global:LogFile $txt
+            Write-Host $txt -ForegroundColor Green
+        }
+        
+        # Log header
+        $date2 = Get-Date -Format 'yyyyMMddhhmmss'
+        $username = whoami
+        $hostname = hostname
+        $os = Get-WmiObject -Class Win32_OperatingSystem | Select-Object -ExpandProperty Caption
+        Write-Log "**********************
+        Start time: $date2
+        Username  : $username
+        Machine   : $hostname ($os)
+        **********************"
+        
+        Function Change-SqlServerLicense {
+            Param(
+                [string]$setupExePath,
+                [string]$InstanceName,
+                [string]$DecryptedLicenseKey
+            )
+            
+            $setupArguments = "/q /ACTION=EditionUpgrade /INSTANCENAME=$InstanceName /PID=`"$DecryptedLicenseKey`" /IACCEPTSQLSERVERLICENSETERMS"
+            
+            Try {
+                Write-Log "Starting SQL Server Edition Upgrade for instance $InstanceName with new License Key."
+                
+                # Run the setup command to upgrade the edition and replace the license key
+                Start-Process -FilePath $setupExePath -ArgumentList $setupArguments -Wait -NoNewWindow
+                
+                Write-Log "SQL Server license has been replaced successfully for instance $InstanceName."
+            } Catch {
+        		Write-Log "An error occurred while trying to replace the SQL Server license for instance ${InstanceName}: $_"
+            }
+        }
+        
+        # Function to decrypt an encrypted License key using a provided password
+        Function Decrypt-LicenseKey {
+            Param(
+                [string]$EncryptedLicenseKey,
+                [string]$DecryptionPassword
+            )
+            
+            # Convert the password to a 128-bit AES key
+            $aesKey = [Text.Encoding]::UTF8.GetBytes($DecryptionPassword.PadRight(16).Substring(0,16))
+            
+            # Decrypt the License key
+            $secureLicenseKey = ConvertTo-SecureString -String $EncryptedLicenseKey -Key $aesKey
+            $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureLicenseKey)
+            Try {
+                $decryptedLicenseKey = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+            } Finally {
+                [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+            }
+            
+            return $decryptedLicenseKey
+        }
+        
+        # Encrypted License keys for different versions
+        $encryptedLicenseKeys = @{
+            "2012_ent" = "76492d1116743f0423413b16050a5345MgB8AEYAVQBJAE8AVQBtAEcALwBRAFQAcQBFAFcAUABlAEoAbAArAEkALwBSAEEAPQA9AHwAZQAyAGMAOABlADIAMABlADgAZQA2AGMANwAzAGUAOQA0ADQANAA3ADkAZQA3AGUANABkADQAMABiAGQAMgA4AGQAOABhADkAZgAwAGQAZQA3ADIAMABlAGUANAA4ADQAZABiADQAMgAyADEAMgAzAGQAMwA1ADUAMQA2ADYAOQAyADUAMwAyAGQANABlAGMANAAyADUAZABiADYANwA5ADIAMgBhADQANQA4ADcAYgA3ADEAOQA2AGUAMQBhAGIAZQBkAGQAYQA2ADUAZQAzADUAOQA1ADUANgBlAGUAMAA2AGUAMwAxADAANgBmAGYAMQBmAGUANQA1ADQANABkAA=="
+            "2016_ent" = "76492d1116743f0423413b16050a5345MgB8ADYAWQBrAHcATABxACsAZAB6AFQASAA2ADQAaQBHADAANQAyAEwAYgBWAEEAPQA9AHwAYgBlADYAMAA5AGQAYgBkAGIAZgA3AGMAZABjAGMANABmADQAMAAxAGIAOQA0ADAAYQAwADAAZgAwADcANwBkADUAYgBkADQAMAA0ADcAYQBlAGUAMgBkADkAOQAzADYAOABjADkAMgAwADEANwBiAGEAYQA3ADYAOQAzAGIAYgBjAGEAZQA3AGYAYQBkAGIAMgBlAGMAOAA4AGYAZAA1ADkAMABmAGUAMgAzAGUANQBiADIANgBiAGYAMABiADMAZgA4AGMAOAA1ADEAMgAyAGEAZQA1AGYAOQAyAGQAMABmAGYAMAA3AGQANwA2AGYAMQA2ADYAZgBlADcANgA2AA=="
+            "2017_ent" = "76492d1116743f0423413b16050a5345MgB8AHAAZwBNAGQARQA3AGEAbAAwAFUAcAAwAGYAUwBvAGMALwA2ADAAbQBoAEEAPQA9AHwANgAyAGUAMgBjAGUANwBlAGIAOQA5ADUAYQBlADYAZABlADMAYQA5ADkAYQBhAGIANABkADAAYgA1ADMAZABjADUANwBkAGQAOAA5ADIAYQBlAGEAOQBjADIAZAAyAGEAMgAzADAANQAyADcAYgBhADIANwA5AGUAOABkADgANwBmADQAYwA0ADEAMABlADAAYQA5ADcAMwA0AGEAZgBlADAAZgA3AGYANABlAGQAMgBiADQAZQBkAGYAYwA0ADMAZQBlAGUAOABjADAANAAwADQAMABmADAAMAA0ADEAOQBjADgAYwAwADAAOAAzADEAOQBhADkAMgA1ADQAMgBmAA=="
+            "2019_ent" = "76492d1116743f0423413b16050a5345MgB8AEUAagB1AEMAUgB0ADkASQBNAFcARAB5ADcANwBWADkAYwBaAGsAUgBOAFEAPQA9AHwANgBkAGIAMgAyADgAMAA0ADAAMwBhAGMAOQBlAGUAMwA0ADMAZAAxADcAMwBlAGUAOAAzAGEAZQBjAGEAOAA4ADEAZQA0ADUANgBkADIAMwAyAGEAYgA3AGMANQAzADMANwBkAGYAYQBiADIAZQBkAGUAYwAwADgAMgBkADcAZgBiADcANgA0AGEANwA3AGEAZABkAGYAOAA3ADAAYQBjADQANgA1AGIAMAA0ADUAYQBmAGEANQA4ADAANwA4ADEAZgAwAGQAMQA2ADQAZQBmADAANQBmAGUAYQAzAGUAMgBkADEAMQA0AGUAOQA0ADEAOQBmADQAZgBiADcANAA1AA=="	
+        }
+        
+        # Decrypt the License key
+        $decryptedLicenseKey = Decrypt-LicenseKey -EncryptedLicenseKey $encryptedLicenseKeys[$Version] -DecryptionPassword $Password
+        
+        # Change the SQL Server license
+        Change-SqlServerLicense -setupExePath $path -InstanceName $InstanceName -DecryptedLicenseKey $decryptedLicenseKey
+        
+        # Restart SQL Server service if the License was changed successfully
+        $serviceName = if ($InstanceName -eq "MSSQLSERVER") { $InstanceName } else { "MSSQL`$$InstanceName" }
+        
+        Try {
+            Write-Log "Attempting to stop SQL Server service ${serviceName}."
+            Stop-Service -Name $serviceName -Force -ErrorAction Stop
+            Start-Sleep -Seconds 5 # Wait for 5 seconds to ensure the service stops
+        
+            Write-Log "Attempting to start SQL Server service ${serviceName}."
+            Start-Service -Name $serviceName
+            Write-Log "SQL Server service ${serviceName} restarted successfully."
+        } Catch {
+            Write-Log "An error occurred while trying to restart the SQL Server service ${serviceName}: $_"
+        }
+      instanceId: '{{ ACS::TaskLoopItem }}'
+      commandType: RunPowerShellScript
+    Outputs:
+      commandOutput:
+        Type: String
+        ValueSelector: invocationOutput
+    Loop:
+      Items: '{{ getInstance.instanceIds }}'
+      RateControl: '{{ rateControl }}'
+      Outputs:
+        commandOutputs:
+          AggregateType: Fn::ListJoin
+          AggregateField: commandOutput
+Outputs:
+  commandOutputs:
+    Type: List
+    Value: '{{ runCommand.commandOutputs }}'
+Metadata:
+  ALIYUN::OOS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - targets
+          - regionId
+        Label:
+          default:
+            zh-cn: 配置参数
+            en: Configure Parameters
+      - Parameters:
+          - rateControl
+          - OOSAssumeRole
+        Label:
+          default:
+            zh-cn: 高级选项
+            en: Control Options

@@ -41,6 +41,13 @@ Parameters:
     Label:
       en: InstanceTypeFamily
       zh-cn: 实例规格族
+    Default: ''
+  instanceTypeFamilyGroup:
+    Type: String
+    Label:
+      en: InstanceTypeFamilyGroup
+      zh-cn: 实例规格族套餐
+    Default: ''
   committedAmount:
     Type: Number
     Label:
@@ -76,6 +83,7 @@ Tasks:
         OfferingType: '{{ offeringType }}'
         CommittedAmount: '{{ committedAmount }}'
         InstanceTypeFamily: '{{ instanceTypeFamily }}'
+        InstanceTypeFamilyGroup: '{{ instanceTypeFamilyGroup }}'
         PeriodUnit: '{{ periodUnit }}'
         Period: '{{ period }}'
     Outputs:

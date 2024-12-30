@@ -1,0 +1,87 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "en": "Change the storage redundancy type of a bucket to zone-redundant storage (ZRS)",
+    "zh-cn": "开启OSS存储空间同城冗余存储",
+    "name-en": "ACS-OSS-EnableBucketZRS",
+    "name-zh-cn": "开启OSS存储空间同城冗余存储",
+    "categories": [
+      "security"
+    ]
+  },
+  "Tasks": [
+    {
+      "Name": "ExecuteApi",
+      "Action": "ACS::ExecuteApi",
+      "Description": {
+        "en": "Change the storage redundancy type of a bucket to zone-redundant storage (ZRS).",
+        "zh-cn": "开启OSS存储空间同城冗余存储"
+      },
+      "Properties": {
+        "Parameters": {
+          "BucketName": "{{ ACS::TaskLoopItem }}",
+          "x-oss-target-redundancy-type": "ZRS",
+          "RegionId": "{{ regionId }}"
+        },
+        "Service": "oss",
+        "API": "CreateBucketDataRedundancyTransition"
+      },
+      "Loop": {
+        "Items": "{{ bucketNames}}",
+        "RateControl": "{{ rateControl }}"
+      },
+      "Outputs": {}
+    }
+  ],
+  "Outputs": {},
+  "Parameters": {
+    "regionId": {
+      "Type": "String",
+      "Label": {
+        "en": "RegionId",
+        "zh-cn": "地域ID"
+      },
+      "AssociationProperty": "RegionId",
+      "Default": "{{ ACS::RegionId }}"
+    },
+    "bucketNames": {
+      "Type": "List",
+      "Label": {
+        "en": "BucketName",
+        "zh-cn": "OSS Bucket 名称"
+      },
+      "AssociationProperty": "List[Parameter]",
+      "AssociationPropertyMetadata": {
+        "Parameter": {
+          "Type": "String",
+          "AssociationProperty": "ALIYUN::OSS::Bucket::BucketName",
+          "AssociationPropertyMetadata": {
+            "RegionId": "${regionId}"
+          }
+        }
+      }
+    },
+    "rateControl": {
+      "Label": {
+        "en": "RateControl",
+        "zh-cn": "任务执行的并发比率"
+      },
+      "Type": "Json",
+      "AssociationProperty": "RateControl",
+      "Default": {
+        "Mode": "Concurrency",
+        "MaxErrors": 0,
+        "Concurrency": 10
+      }
+    },
+    "OOSAssumeRole": {
+      "Label": {
+        "en": "OOSAssumeRole",
+        "zh-cn": "OOS扮演的RAM角色"
+      },
+      "Type": "String",
+      "Default": ""
+    }
+  },
+  "RamRole": "{{ OOSAssumeRole }}"
+}

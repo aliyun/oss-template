@@ -1,0 +1,108 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: ACS-ECS-SetDiskEncryption
+  zh-cn: 设置云盘默认加密操作
+  name-en: ACS-ECS-SetDiskEncryption
+  name-zh-cn: 设置云盘默认加密操作
+Parameters:
+  createDiskEncryptions:
+    Type: List
+    Default: []
+    Label:
+      en: Create disk encryption options
+      zh-cn: 开启云盘加密的选项
+    AssociationProperty: List[Parameters]
+    AssociationPropertyMetadata:
+      Parameters:
+        RegionId:
+          Type: String
+          AssociationProperty: RegionId
+        KMSKeyId:
+          Type: String
+          AssociationProperty: ALIYUN::KMS::Key::KeyId
+          AssociationPropertyMetadata:
+            RegionId: ${.RegionId}
+          Default: Null
+  modifyDiskEncryptions:
+    Type: List
+    Default: []
+    Label:
+      en: Modify disk encryption options
+      zh-cn: 修改云盘加密的选项
+    AssociationProperty: List[Parameters]
+    AssociationPropertyMetadata:
+      Parameters:
+        RegionId:
+          Type: String
+          AssociationProperty: RegionId
+        KMSKeyId:
+          Type: String
+          AssociationProperty: ALIYUN::KMS::Key::KeyId
+          AssociationPropertyMetadata:
+            RegionId: ${.RegionId}
+          Default: Null
+  disableDiskEncryptions:
+    Type: List
+    Default: []
+    Label:
+      en: Disable disk encryption options
+      zh-cn: 关闭云盘加密的选项
+    AssociationProperty: List[Parameters]
+    AssociationPropertyMetadata:
+      Parameters:
+        RegionId:
+          Type: String
+          AssociationProperty: RegionId
+  rateControl:
+    Label:
+      en: RateControl
+      zh-cn: 任务执行的并发比率
+    Type: Json
+    AssociationProperty: RateControl
+    Default:
+      Mode: Concurrency
+      MaxErrors: 0
+      Concurrency: 10
+RamRole: ''
+Tasks:
+  - Name: DisableDiskEncryptionByDefault
+    Action: ACS::ECS::DisableDiskEncryptionByDefault
+    Description: 'DisableDiskEncryptionByDefault'
+    Properties:
+      regionId:
+        Fn::Select:
+          - RegionId
+          - '{{ ACS::TaskLoopItem }}'
+    Loop:
+      Items: '{{ disableDiskEncryptions }}'
+      RateControl: '{{ rateControl }}'
+  - Name: ModifyDiskDefaultKMSKeyId
+    Action: ACS::ECS::ModifyDiskDefaultKMSKeyId
+    Description: 'ModifyDiskDefaultKMSKeyId'
+    Properties:
+      regionId:
+        Fn::Select:
+          - RegionId
+          - '{{ ACS::TaskLoopItem }}'
+      KMSKeyId:
+        Fn::Select:
+          - KMSKeyId
+          - '{{ ACS::TaskLoopItem }}'
+    Loop:
+      Items: '{{ modifyDiskEncryptions }}'
+      RateControl: '{{ rateControl }}'
+  - Name: EnableDiskEncryptionByDefault
+    Action: ACS::ECS::EnableDiskEncryptionByDefault
+    Description: 'EnableDiskEncryptionByDefault'
+    Properties:
+      regionId:
+        Fn::Select:
+          - RegionId
+          - '{{ ACS::TaskLoopItem }}'
+      KMSKeyId:
+        Fn::Select:
+          - KMSKeyId
+          - '{{ ACS::TaskLoopItem }}'
+    Loop:
+      Items: '{{ createDiskEncryptions }}'
+      RateControl: '{{ rateControl }}'

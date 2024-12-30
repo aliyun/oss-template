@@ -62,6 +62,9 @@ Parameters:
       RegionId: regionId
       Status: Running
   orderId:
+    Label:
+      en: OrderId
+      zh-cn: 订单号
     Description:
       en: The ID of Order
       zh-cn: 订单ID

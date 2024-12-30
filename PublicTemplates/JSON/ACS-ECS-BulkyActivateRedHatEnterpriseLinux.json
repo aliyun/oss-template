@@ -1,0 +1,176 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "en": "Red Hat Enterprise Linux template activation",
+    "zh-cn": "RHEL模板激活",
+    "name-en": "ACS-ECS-BulkyActivateRedHatEnterpriseLinux",
+    "name-zh-cn": "RHEL模板激活",
+    "categories": [
+      "run_command",
+      "application_manage"
+    ]
+  },
+  "Parameters": {
+    "regionId": {
+      "Type": "String",
+      "Label": {
+        "en": "RegionId",
+        "zh-cn": "地域ID"
+      },
+      "AssociationProperty": "RegionId",
+      "Default": "{{ ACS::RegionId }}"
+    },
+    "targets": {
+      "Type": "Json",
+      "Label": {
+        "en": "TargetInstance",
+        "zh-cn": "目标实例"
+      },
+      "AssociationProperty": "Targets",
+      "AssociationPropertyMetadata": {
+        "ResourceType": "ALIYUN::ECS::Instance",
+        "RegionId": "regionId"
+      }
+    },
+    "rateControl": {
+      "Label": {
+        "en": "RateControl",
+        "zh-cn": "任务执行的并发比率"
+      },
+      "Type": "Json",
+      "AssociationProperty": "RateControl",
+      "Default": {
+        "Mode": "Concurrency",
+        "MaxErrors": 0,
+        "Concurrency": 10
+      }
+    },
+    "OOSAssumeRole": {
+      "Label": {
+        "en": "OOSAssumeRole",
+        "zh-cn": "OOS扮演的RAM角色"
+      },
+      "Type": "String",
+      "Default": ""
+    }
+  },
+  "RamRole": "{{ OOSAssumeRole }}",
+  "Tasks": [
+    {
+      "Name": "getInstance",
+      "Description": {
+        "en": "Views the ECS instances",
+        "zh-cn": "获取ECS实例"
+      },
+      "Action": "ACS::SelectTargets",
+      "Properties": {
+        "ResourceType": "ALIYUN::ECS::Instance",
+        "RegionId": "{{ regionId }}",
+        "Filters": [
+          "{{ targets }}"
+        ]
+      },
+      "Outputs": {
+        "instanceIds": {
+          "Type": "List",
+          "ValueSelector": "Instances.Instance[].InstanceId"
+        }
+      }
+    },
+    {
+      "Name": "tagInstance",
+      "Action": "ACS::ExecuteApi",
+      "Description": {
+        "en": "Creates and attaches tag to ECS instance",
+        "zh-cn": "创建并挂载标签到ECS实例"
+      },
+      "Properties": {
+        "Service": "ECS",
+        "API": "TagResources",
+        "Parameters": {
+          "RegionId": "{{ regionId }}",
+          "ResourceIds": [
+            "{{ ACS::TaskLoopItem }}"
+          ],
+          "ResourceType": "Instance",
+          "Tags": [
+            {
+              "Key": "activation-execution-id",
+              "Value": "{{ ACS::ExecutionId }}"
+            }
+          ]
+        }
+      },
+      "Loop": {
+        "RateControl": "{{ rateControl }}",
+        "Items": "{{ getInstance.instanceIds }}"
+      }
+    },
+    {
+      "Name": "runCommand",
+      "Action": "ACS::ECS::ActivateSoftware",
+      "Description": {
+        "en": "Execute cloud assistant command",
+        "zh-cn": "执行云助手命令"
+      },
+      "Properties": {
+        "regionId": "{{ regionId }}",
+        "commandContent": "#bin/bash\n# Subscribe to Redhat repo on Alibaba Cloud ECS\n\n# error code list\n# 1: get os version failed by release file\n# 2: can not get os version by release file not exists\n# 3: not support rhel 7 arm64\n# 4: os not in support list\n# 5: download rpm from mirrors site failed\n\n# rhui repo rpm list\n\nrhel_7_x86_url=\"https://mirrors-ssl.aliyuncs.com/pulp/repos/unprotected/alibaba/rhuicli/Packages/c/client-rhel7-3.0-1.el7_9.noarch.rpm\"\n\nrhel_8_x86_url=\"https://redhat.mirrors.aliyuncs.com/pulp/content/unprotected/alibaba/rhuicli-rhel-8/Packages/a/aliyun_rhui_rhel8-2.0-3.x86_64.rpm\"\nrhel_8_arm64_url=\"https://redhat.mirrors.aliyuncs.com/pulp/content/unprotected/alibaba/rhuicli-rhel-8/Packages/a/aliyun_rhui_rhel8-2.0-3.aarch64.rpm\"\n\nrhel_9_x86_url=\"https://redhat.mirrors.aliyuncs.com/pulp/content/unprotected/alibaba/rhuicli-rhel-9/Packages/a/aliyun_rhui_rhel9-2.0-1.x86_64.rpm\"\nrhel_9_arm64_url=\"https://redhat.mirrors.aliyuncs.com/pulp/content/unprotected/alibaba/rhuicli-rhel-9/Packages/a/aliyun_rhui_rhel9-2.0-1.aarch64.rpm\"\n\nDISTRO=\nARCH=\nOSVER=\n\nfunction init_arch_version(){\n    ARCH=$(uname -m)\n    if [ -f /etc/redhat-release ];then\n        grep -q \"CentOS Linux release\" /etc/redhat-release && DISTRO=centos\n        OSVER=$(cat /etc/redhat-release |grep -oP '\\d' |head -n 1)\n        return\n    fi\n    if [ -f /etc/os-release ];then\n        grep -q \"CentOS Linux\" /etc/os-release && DISTRO=centos\n        OSVER=$(cat /etc/os-release |grep VERSION_ID |grep  -oP '\\d' |head -n 1)\n        return\n    fi\n\n    if [ -z $OSVER ];then\n        echo \"Unable to get OS version\"\n        exit 1\n    fi\n\n    echo \"redhat-release & os-release not exist, Unable to get OS version\"\n    exit 2\n}\n\nfunction download_rpm_to_local() {\n    url=$1\n    localpath=$2\n    wget -q $url -O $localpath\n    if [ $? -ne 0 ];then\n        echo \"download $url failed\"\n        exit 5\n    fi\n}\n\nfunction rhel_7_x86_subscription() {\n    echo \"Subscribing to Red Hat Enterprise Linux Server 7 x86 repo on Alibaba Cloud ECS\"\n    \n    download_rpm_to_local $rhel_7_x86_url /tmp/client-rhel7-3.0-1.el7_9.noarch.rpm  \n    rpm -ivh --replacefiles --force /tmp/client-rhel7-3.0-1.el7_9.noarch.rpm \n    rm -fv  /tmp/client-rhel7-3.0-1.el7_9.noarch.rpm\n    yum clean all\n    yum makecache\n}\n\nfunction centos_7_x86_subscription() {\n    echo \"Subscribing Centos Linux 7 with Red Hat Enterprise Linux Server 7 x86 repo on Alibaba Cloud ECS\"\n\n    download_rpm_to_local $rhel_7_x86_url /tmp/client-rhel7-3.0-1.el7_9.noarch.rpm\n    rpm -ivh --replacefiles --force /tmp/client-rhel7-3.0-1.el7_9.noarch.rpm\n    rm -fv  /tmp/client-rhel7-3.0-1.el7_9.noarch.rpm\n    sed -i s/\\$releasever/7Server/g /etc/yum.repos.d/rh-cloud.repo\n    yum clean all\n    yum makecache\n}\n\nfunction rhel_7_arm64_subscription() {\n    echo \"not support rhel 7 arm64\"\n    exit 3\n}\n\n\nfunction rhel_8_x86_subscription() {\n    echo \"Subscribing to Red Hat Enterprise Linux Server 8 x86 repo on Alibaba Cloud ECS\"\n    download_rpm_to_local  $rhel_8_x86_url /tmp/aliyun_rhui_rhel8-2.0-3.x86_64.rpm\n    rpm -ivh --replacefiles --force /tmp/aliyun_rhui_rhel8-2.0-3.x86_64.rpm\n    rm -fv  /tmp/aliyun_rhui_rhel8-2.0-3.x86_64.rpm\n    yum clean all\n    yum makecache\n}\n\nfunction rhel_8_arm64_subscription() {\n    echo \"Subscribing to Red Hat Enterprise Linux Server 8 arm64 repo on Alibaba Cloud ECS\"\n    download_rpm_to_local $rhel_8_arm64_url  /tmp/aliyun_rhui_rhel8-2.0-3.aarch64.rpm\n    rpm -ivh --replacefiles --force /tmp/aliyun_rhui_rhel8-2.0-3.aarch64.rpm\n    rm -fv  /tmp/aliyun_rhui_rhel8-2.0-3.aarch64.rpm\n    yum clean all\n    yum makecache\n}\n\nfunction rhel_9_x86_subscription() {\n    echo \"Subscribing to Red Hat Enterprise Linux Server 9 x86 repo on Alibaba Cloud ECS\"\n    download_rpm_to_local $rhel_9_x86_url  /tmp/aliyun_rhui_rhel9-2.0-1.x86_64.rpm\n    rpm -ivh --replacefiles --force /tmp/aliyun_rhui_rhel9-2.0-1.x86_64.rpm\n    rm -fv  /tmp/aliyun_rhui_rhel9-2.0-1.x86_64.rpm\n    yum clean all\n    yum makecache\n}\n\nfunction rhel_9_arm64_subscription() {\n    echo \"Subscribing to Red Hat Enterprise Linux Server 9 arm64 repo on Alibaba Cloud ECS\"\n    download_rpm_to_local $rhel_9_arm64_url  /tmp/aliyun_rhui_rhel9-2.0-1.aarch64.rpm\n    rpm -ivh --replacefiles --force /tmp/aliyun_rhui_rhel9-2.0-1.aarch64.rpm\n    rm -fv  /tmp/aliyun_rhui_rhel9-2.0-1.aarch64.rpm\n    yum clean all\n    yum makecache\n}\n\n\nfunction main() {\n    init_arch_version\n    case \"$DISTRO$OSVER$ARCH\" in\n        centos7x86_64)\n            centos_7_x86_subscription\n        ;;\n        centos8x86_64)\n            rhel_8_x86_subscription\n        ;;\n        7x86_64)\n            rhel_7_x86_subscription\n        ;;\n        7aarch64)\n            rhel_7_arm64_subscription\n        ;;\n        8x86_64)\n            rhel_8_x86_subscription\n        ;;\n        8aarch64)\n            rhel_8_arm64_subscription\n        ;;\n        9x86_64)\n            rhel_9_x86_subscription\n        ;;\n        9aarch64)\n            rhel_9_arm64_subscription\n        ;;\n        *)  \n            echo \"not support your os, only support rhel 7[x86],centos 7[x86],centos 8[x86], rhel 8[x86,arm64], rhel 9[x86,arm64]\"\n            exit 4\n        ;;\n    esac\n\n}\n\nmain",
+        "instanceId": "{{ ACS::TaskLoopItem }}",
+        "commandType": "RunShellScript"
+      },
+      "Outputs": {
+        "commandOutput": {
+          "Type": "String",
+          "ValueSelector": "invocationOutput"
+        }
+      },
+      "Loop": {
+        "Items": "{{ getInstance.instanceIds }}",
+        "RateControl": "{{ rateControl }}",
+        "Outputs": {
+          "commandOutputs": {
+            "AggregateType": "Fn::ListJoin",
+            "AggregateField": "commandOutput"
+          }
+        }
+      }
+    }
+  ],
+  "Outputs": {
+    "commandOutputs": {
+      "Type": "List",
+      "Value": "{{ runCommand.commandOutputs }}"
+    }
+  },
+  "Metadata": {
+    "ALIYUN::OOS::Interface": {
+      "ParameterGroups": [
+        {
+          "Parameters": [
+            "targets",
+            "regionId"
+          ],
+          "Label": {
+            "default": {
+              "zh-cn": "配置参数",
+              "en": "Configure Parameters"
+            }
+          }
+        },
+        {
+          "Parameters": [
+            "rateControl",
+            "OOSAssumeRole"
+          ],
+          "Label": {
+            "default": {
+              "zh-cn": "高级选项",
+              "en": "Control Options"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

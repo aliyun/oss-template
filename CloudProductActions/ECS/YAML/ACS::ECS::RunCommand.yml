@@ -41,6 +41,12 @@ Parameters:
     AssociationProperty: ALIYUN::OOS::Command::CommandContent
     AssociationPropertyMetadata:
       CommandType: ${commandType}
+  contentEncoding:
+    Label:
+      en: ContentEncoding
+      zh-cn: 命令编码方式
+    Type: String
+    Default: PlainText
   workingDir:
     Description:
       en: 'Linux instances: under the home directory of the administrator (root user): /root.Windows instances: under the directory where the process of the Cloud Assistant client is located, such asC:\Windows\System32'
@@ -123,6 +129,12 @@ Parameters:
             - Fn::Equals:
                 - ${commandType}
                 - RunPowerShellScript
+  maxRetryInterval:
+    Label:
+      en: MaxRetryInterval
+      zh-cn: 最大重试间隔
+    Type: Number
+    Default: 300
 Tasks:
 - Name: runCommand
   Action: 'ACS::ExecuteAPI'
@@ -135,6 +147,7 @@ Tasks:
     Parameters:
       RegionId: '{{ regionId }}'
       CommandContent: '{{ commandContent }}'
+      ContentEncoding: '{{ contentEncoding }}'
       InstanceIds:
         - '{{instanceId}}'
       Name: '{{ ACS::ExecutionId }}'
@@ -166,7 +179,7 @@ Tasks:
     zh-cn: 等待云助手命令执行完成
   OnError: ACS::END
   Retries: 296
-  MaxRetryInterval: 300
+  MaxRetryInterval: '{{ maxRetryInterval }}'
   Properties:
     Service: ECS
     API: DescribeInvocations
@@ -233,7 +246,10 @@ Metadata:
           - parameters
           - username
           - windowsPasswordName
+          - maxRetryInterval
         Label:
           default:
             zh-cn: 执行命令选项
             en: Run Command Options
+    Hidden:
+      - contentEncoding

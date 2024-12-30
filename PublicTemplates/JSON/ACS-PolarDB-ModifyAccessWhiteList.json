@@ -1,0 +1,105 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "en": "Modify polarDB cluseter ip whitelist",
+    "zh-cn": "删除PolarDB集群IP白名单中的0.0.0.0/0",
+    "name-en": "ACS-PolarDB-ModifyAccessWhiteList",
+    "name-zh-cn": "删除PolarDB集群IP白名单中的0.0.0.0/0",
+    "categories": [
+      "security"
+    ]
+  },
+  "Tasks": [
+    {
+      "Name": "describeDBClusterAccessWhitelist",
+      "Action": "ACS::ExecuteAPI",
+      "Description": {
+        "en": "Describes the whitelist",
+        "zh-cn": "获取白名单信息"
+      },
+      "Properties": {
+        "Service": "POLARDB",
+        "API": "DescribeDBClusterAccessWhitelist",
+        "Parameters": {
+          "DBClusterId": "{{ dbClusterId }}",
+          "RegionId": "{{ regionId }}"
+        }
+      },
+      "Outputs": {
+        "dBClusterIPArray": {
+          "Type": "List",
+          "ValueSelector": ".Items.DBClusterIPArray[] | select(.SecurityIps | contains(\"0.0.0.0/0\")) | {\"SecurityIps\": .SecurityIps, \"DBClusterIPArrayName\": .DBClusterIPArrayName}"
+        }
+      }
+    },
+    {
+      "Name": "deleteIpFromWhitelist",
+      "Action": "ACS::ExecuteAPI",
+      "Description": {
+        "en": "Delete ipaddress from whitelist",
+        "zh-cn": "从白名单删除IP"
+      },
+      "Properties": {
+        "Service": "POLARDB",
+        "API": "ModifyDBClusterAccessWhitelist",
+        "Parameters": {
+          "DBClusterId": "{{ dbClusterId }}",
+          "ModifyMode": "Delete",
+          "SecurityIps": "{{ securityIp }}",
+          "RegionId": "{{ regionId }}",
+          "DBClusterIPArrayName": {
+            "Fn::Select": [
+              "DBClusterIPArrayName",
+              "{{ ACS::TaskLoopItem }}"
+            ]
+          }
+        }
+      },
+      "Outputs": {},
+      "Loop": {
+        "Items": "{{ describeDBClusterAccessWhitelist.dBClusterIPArray }}",
+        "RateControl": {
+          "Mode": "Concurrency",
+          "MaxErrors": 0,
+          "Concurrency": 1
+        },
+        "Outputs": {}
+      }
+    }
+  ],
+  "Parameters": {
+    "dbClusterId": {
+      "Label": {
+        "en": "PolarDBClusterId",
+        "zh-cn": "PolarDB集群ID"
+      },
+      "Type": "String"
+    },
+    "securityIp": {
+      "Label": {
+        "en": "SecurityIp",
+        "zh-cn": "待删除的ip"
+      },
+      "Type": "String",
+      "Default": "0.0.0.0/0"
+    },
+    "regionId": {
+      "Label": {
+        "en": "RegionId",
+        "zh-cn": "地域ID"
+      },
+      "Type": "String",
+      "AssociationProperty": "RegionId",
+      "Default": "{{ ACS::RegionId }}"
+    },
+    "OOSAssumeRole": {
+      "Label": {
+        "en": "OOSAssumeRole",
+        "zh-cn": "OOS扮演的RAM角色"
+      },
+      "Type": "String",
+      "Default": ""
+    }
+  },
+  "RamRole": "{{ OOSAssumeRole }}"
+}

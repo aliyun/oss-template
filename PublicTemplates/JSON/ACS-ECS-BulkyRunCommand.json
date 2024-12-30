@@ -1,8 +1,8 @@
 {
   "FormatVersion": "OOS-2019-06-01",
   "Description": {
-    "en": "Bulky run command on ECS instances",
-    "zh-cn": "批量在多台ECS实例上运行云助手命令",
+    "en": "Bulky run commands on multiple ECS instances, applicable to scenarios that require managing multiple ECS instances simultaneously, such as application management and resource tagging operations. During configuration, users need to provide the following required parameter information: Region ID (regionId), which specifies the region of the target ECS instances where the commands will be executed, Resource Type (resourceType), to determine the type of target ECS instances (e.g., ECS instance or managed instance), and Target Instances (targets), to select the specific instances to be operated on. Other parameters include Command Type (commandType), which specifies the type of command to be executed (e.g., Shell script, Python script, etc.), and Command Content (commandContent), which is the actual command or script. Upon execution, the template provides the output results of the bulk operation, enabling users to verify the status of the command executions.",
+    "zh-cn": "批量在多台ECS实例上运行云助手命令，适用于需要同时管理多台ECS实例的场景，如应用程序管理和资源标记操作等。在配置过程中，用户需要提供以下必填参数信息，地域ID（regionId）：用于指定需要执行命令的目标ECS实例所在的区域，资源类型（resourceType）：用于确定目标ECS实例的类型（如ECS实例或受管实例），目标实例（targets）：用于选择要操作的具体实例列表。参数还包括命令类型（commandType）：指定要执行的命令类型（如Shell脚本、Python脚本等），以及命令内容（commandContent）：具体的命令或脚本内容。模板在执行后会返回批量操作的输出结果，方便用户验证命令执行的状态。",
     "name-en": "Run Command",
     "name-zh-cn": "发送远程命令",
     "categories": [

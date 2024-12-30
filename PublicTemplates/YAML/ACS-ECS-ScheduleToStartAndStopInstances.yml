@@ -1,7 +1,7 @@
 FormatVersion: OOS-2019-06-01
 Description:
-  en: Schedule to start and stop ECS instances
-  zh-cn: 定时开启和停止ECS实例
+  en: 'Schedule to start and stop ECS instances, applicable to scenarios where regular and scheduled management of ECS instances is required, such as automated operations of development environments and cost optimization. During configuration, users need to provide the following required parameter information: Region ID (regionId), which specifies the region of the ECS instances to be operated on, Daily Start Time (dailyStartTime), Daily Stop Time (dailyStopTime), and the Days of Week (weekdays), which define the schedule for the tasks. Upon execution, the template will start and stop the ECS instances according to the configured schedule.'
+  zh-cn: 定时开启和停止ECS实例，适用于需要定期管理和调度ECS实例的场景，例如开发环境的自动化运维和成本优化。在配置过程中，用户需要提供以下必填参数信息，地域ID（regionId）：用于指定操作实例的地域，每天开启实例的时间（dailyStartTime）、每天停止实例的时间（dailyStopTime）、任务执行的周期（weekdays）：用于定义任务的定时触发规则。模板在执行后会根据设置的时间表开启和停止ECS实例。
   name-en: ACS-ECS-ScheduleToStartAndStopInstances
   name-zh-cn: 定时开启和停止ECS实例
   categories:

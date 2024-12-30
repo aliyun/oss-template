@@ -1,0 +1,29 @@
+FormatVersion: OOS-2019-06-01
+RamRole: ''
+Description:
+  name-en: ACS::ECS::ResetDiskDefaultKMSKeyId
+  name-zh-cn: 根据密钥类型修改云盘默认加密密钥
+Parameters:
+  regionId:
+    Type: String
+    AssociationProperty: RegionId
+    Label: 地域ID
+  KMSKeyId:
+    Type: String
+Tasks:
+  - Name: ResetDiskDefaultKMSKeyId
+    Action: ACS::ExecuteApi
+    Description: 'ResetDiskDefaultKMSKeyId'
+    Properties:
+      Service: ECS
+      API: ResetDiskDefaultKMSKeyId
+      Parameters:
+        RegionId: '{{ RegionId }}'
+    Outputs:
+      RequestId:
+        Type: String
+        ValueSelector: .RequestId
+Outputs:
+  modifyRequestId:
+    Type: String
+    Value: '{{ ResetDiskDefaultKMSKeyId.RequestId }}'

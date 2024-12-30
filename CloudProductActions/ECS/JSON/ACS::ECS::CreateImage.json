@@ -32,9 +32,7 @@
       "AssociationProperty": "ALIYUN::ECS::Instance::InstanceId",
       "AssociationPropertyMetadata": {
         "RegionId": "regionId"
-      },
-      "MinLength": 1,
-      "MaxLength": 30
+      }
     },
     "tags": {
       "Label": {

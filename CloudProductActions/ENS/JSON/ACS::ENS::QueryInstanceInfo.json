@@ -1,0 +1,35 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "en": "Query ENS instance ID and instance information",
+    "zh-cn": "查询ENS实例ID及实例信息",
+    "name-en": "ACS::ENS::QueryInstanceInfo",
+    "name-zh-cn": "查询ENS实例ID及实例信息"
+  },
+  "Tasks": [
+    {
+      "Name": "ExecuteApi",
+      "Action": "ACS::ExecuteApi",
+      "Description": "查询ENS实例列表",
+      "Properties": {
+        "Parameters": {
+          "PageSize": 100
+        },
+        "Service": "ens",
+        "API": "DescribeInstances"
+      },
+      "Outputs": {
+        "InstancesInfo": {
+          "Type": "List",
+          "ValueSelector": ".Instances.Instance[] | del(.DataDisk, .SystemDisk, .SecurityGroupIds, .NetworkAttributes)"
+        }
+      }
+    }
+  ],
+  "Outputs": {
+    "instances_info": {
+      "Type": "List",
+      "Value": "{{ ExecuteApi.InstancesInfo }}"
+    }
+  }
+}

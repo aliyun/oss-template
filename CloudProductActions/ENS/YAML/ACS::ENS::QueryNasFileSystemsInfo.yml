@@ -1,0 +1,22 @@
+FormatVersion: OOS-2019-06-01
+Description:
+  en: Query ENS Nas file system information
+  zh-cn: 查询ENS协同存储文件系统信息
+  name-en: ACS::ENS::QueryNasFileSystemsInfo
+  name-zh-cn: 查询ENS协同存储文件系统信息
+Tasks:
+  - Name: getNasFileSystemsList
+    Action: ACS::ExecuteApi
+    Description: 查询ENS协同存储文件系统列表
+    Properties:
+      Parameters: {}
+      Service: ens
+      API: DescribeFileSystems
+    Outputs:
+      NasFileSystemsInfo:
+        Type: List
+        ValueSelector: .FileSystems[]
+Outputs:
+  nasFileSystemsInfo:
+    Type: List
+    Value: "{{ getNasFileSystemsList.NasFileSystemsInfo }}"

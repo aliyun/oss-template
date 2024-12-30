@@ -1,0 +1,131 @@
+{
+  "FormatVersion": "OOS-2019-06-01",
+  "Description": {
+    "name-en": "ACS::OSS::DeleteBucket",
+    "name-zh-cn": "删除 OSS bucket",
+    "en": "Delete OSS bucket",
+    "zh-cn": "删除 OSS bucket"
+  },
+  "Parameters": {
+    "regionId": {
+      "Type": "String",
+      "Label": {
+        "en": "RegionId",
+        "zh-cn": "地域ID"
+      },
+      "AssociationProperty": "ALIYUN::ECS::RegionId",
+      "Default": "{{ ACS::RegionId }}"
+    },
+    "bucketName": {
+      "Label": {
+        "en": "BucketName",
+        "zh-cn": "OSS bucket 名称"
+      },
+      "Type": "String",
+      "AssociationProperty": "ALIYUN::OSS::Bucket::BucketName",
+      "AssociationPropertyMetadata": {
+        "RegionId": "regionId"
+      }
+    }
+  },
+  "Tasks": [
+    {
+      "Name": "queryObject",
+      "Action": "ACS::ExecuteAPI",
+      "Description": {
+        "en": "Query bucket objects",
+        "zh-cn": "查询bucket对象"
+      },
+      "Properties": {
+        "Service": "OSS",
+        "API": "ListObjectsV2",
+        "Method": "GET",
+        "URI": "/?list-type=2",
+        "Parameters": {
+          "BucketName": "{{ bucketName }}",
+          "RegionId": "{{ regionId }}",
+          "max-keys": "1000"
+        },
+        "Body": "",
+        "AutoPaging": true
+      },
+      "Outputs": {
+        "Objects": {
+          "Type": "List",
+          "ValueSelector": ".| .ListBucketResult | if .KeyCount == \"1\" then .Contents.Key elif .KeyCount == \"0\" then 0 else .Contents[].Key end"
+        }
+      }
+    },
+    {
+      "Name": "whetherToDeleteObject",
+      "Action": "ACS::Choice",
+      "Description": {
+        "en": "Choose next task by object count",
+        "zh-cn": "根据对象数选择任务"
+      },
+      "Properties": {
+        "DefaultTask": "deleteObject",
+        "Choices": [
+          {
+            "When": {
+              "Fn::Equals": [
+                "{{ queryObject.Objects }}",
+                [
+                  0
+                ]
+              ]
+            },
+            "NextTask": "deleteBucket"
+          }
+        ]
+      }
+    },
+    {
+      "Name": "deleteObject",
+      "Action": "ACS::ExecuteAPI",
+      "Description": {
+        "en": "Delete object",
+        "zh-cn": "删除对象"
+      },
+      "Properties": {
+        "Service": "OSS",
+        "API": "DeleteObject",
+        "Method": "DELETE",
+        "URI": "/{{ ACS::TaskLoopItem }}",
+        "Headers": {
+          "Content-MD5": "",
+          "Content-Type": ""
+        },
+        "Parameters": {
+          "BucketName": "{{ bucketName }}",
+          "RegionId": "{{ regionId }}"
+        }
+      },
+      "Loop": {
+        "Items": "{{ queryObject.Objects }}"
+      }
+    },
+    {
+      "Name": "deleteBucket",
+      "Action": "ACS::ExecuteAPI",
+      "Description": {
+        "en": "Delete bucket",
+        "zh-cn": "删除bucket"
+      },
+      "Properties": {
+        "Service": "OSS",
+        "API": "DeleteBucket",
+        "Method": "DELETE",
+        "URI": "/",
+        "Headers": {
+          "Content-MD5": "",
+          "Content-Type": ""
+        },
+        "Parameters": {
+          "BucketName": "{{ bucketName }}",
+          "RegionId": "{{ regionId }}"
+        }
+      }
+    }
+  ]
+}

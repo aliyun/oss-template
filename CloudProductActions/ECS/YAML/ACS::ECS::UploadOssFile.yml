@@ -60,6 +60,12 @@ Parameters:
       en: Path of the file to be uploaded on the ecs
       zh-cn: 待上传文件在ecs上的路径，如/root/your_file.zip (linux), C:\\Users\\Administrator\\your_file.zip (windows)
     Type: String
+  uploadWaitingTime:
+    Label:
+      en: Waiting time for upload (s)
+      zh-cn: 上传等待时间（秒）
+    Type: Number
+    Default: 600
 Tasks:
   - Name: queryInstanceOSType
     Action: 'ACS::ExecuteApi'
@@ -114,6 +120,7 @@ Tasks:
     Properties:
       regionId: '{{ regionId }}'
       instanceId: '{{ instanceId }}'
+      timeout: '{{ uploadWaitingTime }}'
       commandType:
         Fn::If:
           - Fn::Equals:
@@ -127,12 +134,22 @@ Tasks:
               - '{{ queryInstanceOSType.OSType }}'
               - 'linux'
           - |-
-              curl -X PUT -T "{{fileToUpload}}" "{{generateUrl.temporaryUrl}}"
+              response=$(curl -X PUT -T "{{fileToUpload}}" -w "%{http_code}" -v "{{generateUrl.temporaryUrl}}")
+              # 检查响应
+              if [ "$response" -ne 200 ]; then
+                echo "Curl Failed."
+                exit 1
+              fi
           - |-
               $localFilePath = "{{fileToUpload}}"
               $uploadUrl = "{{generateUrl.temporaryUrl}}"
               
-              Invoke-WebRequest -Uri $uploadUrl -Method Put -InFile $localFilePath
+              $response = Invoke-WebRequest -Uri $uploadUrl -Method Put -InFile $localFilePath -UseBasicParsing -ErrorAction Stop
+              # 检查响应内容是否包含 "AccessDenied"
+              if ($response.StatusCode -ne 200) {
+                Write-Host "Invoke-WebRequest Failed."
+                exit 1
+              }
 Metadata:
   ALIYUN::OOS::Interface:
     ParameterGroups:

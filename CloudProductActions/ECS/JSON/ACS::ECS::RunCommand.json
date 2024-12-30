@@ -55,6 +55,14 @@
         "CommandType": "${commandType}"
       }
     },
+    "contentEncoding": {
+      "Label": {
+        "en": "ContentEncoding",
+        "zh-cn": "命令编码方式"
+      },
+      "Type": "String",
+      "Default": "PlainText"
+    },
     "workingDir": {
       "Description": {
         "en": "Linux instances: under the home directory of the administrator (root user): /root.Windows instances: under the directory where the process of the Cloud Assistant client is located, such asC:\\Windows\\System32",
@@ -189,6 +197,14 @@
           }
         }
       }
+    },
+    "maxRetryInterval": {
+      "Label": {
+        "en": "MaxRetryInterval",
+        "zh-cn": "最大重试间隔"
+      },
+      "Type": "Number",
+      "Default": 300
     }
   },
   "Tasks": [
@@ -205,6 +221,7 @@
         "Parameters": {
           "RegionId": "{{ regionId }}",
           "CommandContent": "{{ commandContent }}",
+          "ContentEncoding": "{{ contentEncoding }}",
           "InstanceIds": [
             "{{instanceId}}"
           ],
@@ -255,7 +272,7 @@
       },
       "OnError": "ACS::END",
       "Retries": 296,
-      "MaxRetryInterval": 300,
+      "MaxRetryInterval": "{{ maxRetryInterval }}",
       "Properties": {
         "Service": "ECS",
         "API": "DescribeInvocations",
@@ -349,7 +366,8 @@
             "enableParameter",
             "parameters",
             "username",
-            "windowsPasswordName"
+            "windowsPasswordName",
+            "maxRetryInterval"
           ],
           "Label": {
             "default": {
@@ -358,6 +376,9 @@
             }
           }
         }
+      ],
+      "Hidden": [
+        "contentEncoding"
       ]
     }
   }

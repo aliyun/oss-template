@@ -1,7 +1,7 @@
 FormatVersion: OOS-2019-06-01
 Description:
-  en: Schedule to clean up disks
-  zh-cn: 定时清理磁盘
+  en: 'Schedule to clean up disks, applicable to scenarios that require periodic management and cleaning of disk space on ECS instances, such as automatic log file cleanup and deletion of temporary files. During configuration, users need to provide the following required parameter information: Timer Trigger (timerTrigger), which defines when the cleanup task is triggered, Region ID (regionId), which specifies the region of the ECS instances where the disks will be cleaned, Target Instances (targets), which defines the specific ECS instances to be operated on, and Cleanup Rule (cleanUpInfos), which specifies the specific disk cleanup rules. Upon execution, the template will return a list of the output results of the cleanup command, enabling users to verify the status of the disk cleanup operations.'
+  zh-cn: 定时清理磁盘，适用于需要定期管理和清理ECS实例中的磁盘空间的场景，例如日志文件的自动清理和临时文件的删除。在配置过程中，用户需要提供以下必填参数信息，定时类型（timerTrigger）：用于定义清理任务何时触发，地域ID（regionId）：用于指定需要清理磁盘的ECS实例所在的区域，目标实例（targets）：用于定义具体需要操作的ECS实例，清理规则（cleanUpInfos）：用于指定具体的磁盘清理规则。模板在执行后会返回清理命令的输出结果列表，方便用户验证磁盘清理操作的状态。
   name-en: Cleanup Disks
   name-zh-cn: 清理磁盘
   categories:
